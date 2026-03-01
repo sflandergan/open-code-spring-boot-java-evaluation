@@ -19,6 +19,12 @@
             "output": 4096
           }
         },
+        "lmstudio/Qwen3.5-27B-4bit": {
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        },
         "lmstudio/mistralai/devstral-small-2-2512": {
           "limit": {
             "context": 16384,
@@ -32,6 +38,12 @@
           }
         },
         "lmstudio/gpt-oss-safeguard-20b-MLX-MXFP4": {
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        },
+        "lmstudio/google/gemma-3-27b": {
           "limit": {
             "context": 32768,
             "output": 4096
