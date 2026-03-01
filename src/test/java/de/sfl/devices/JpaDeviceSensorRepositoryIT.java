@@ -6,6 +6,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.util.AopTestUtils;
+import jakarta.persistence.EntityManager;
 
 import java.util.Set;
 import java.util.UUID;
@@ -22,6 +24,9 @@ class JpaDeviceSensorRepositoryIT extends RepositoryIT {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private EntityManager entityManager;
 
     private Device device;
     private Long sensor1Id;
@@ -95,16 +100,39 @@ class JpaDeviceSensorRepositoryIT extends RepositoryIT {
 
     @Test
     void shouldCascadeDeleteAssignmentsWhenDeviceIsDeleted() {
+        // Create and maintain bidirectional relationship
         var deviceSensorId1 = new DeviceSensorId(device.getId(), sensor1Id);
         var deviceSensorId2 = new DeviceSensorId(device.getId(), sensor2Id);
 
-        deviceSensorRepository.save(new DeviceSensor(device, deviceSensorId1));
-        deviceSensorRepository.save(new DeviceSensor(device, deviceSensorId2));
+        var assignment1 = new DeviceSensor(device, deviceSensorId1);
+        var assignment2 = new DeviceSensor(device, deviceSensorId2);
+        
+        // Add to device's collection to maintain bidirectional relationship
+        var assignmentSet = device.getDeviceSensors();
+        assignmentSet.add(assignment1);
+        assignmentSet.add(assignment2);
+        device.setDeviceSensors(assignmentSet);
+        
+        // Save assignments
+        deviceSensorRepository.save(assignment1);
+        deviceSensorRepository.save(assignment2);
+        
+        // Save device with relationship
+        deviceRepository.save(device);
+        entityManager.flush();
 
+        // Verify assignments exist before deletion
+        assertThat(deviceSensorRepository.findAll()).hasSize(2);
+        
+        // Delete device (JPA will cascade delete assignments)
         deviceRepository.delete(device);
-
-        var allAssignments = deviceSensorRepository.findAll();
-        assertThat(allAssignments).isEmpty();
+        entityManager.flush();
+        
+        // Clear cache to force fresh load
+        entityManager.clear();
+        
+        // Verify cascade deletion worked
+        assertThat(deviceSensorRepository.findAll()).isEmpty();
     }
 
     @Test

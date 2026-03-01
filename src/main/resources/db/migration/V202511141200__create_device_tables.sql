@@ -12,7 +12,7 @@ CREATE INDEX idx_devices_name ON devices(name);
 -- Device-Sensor assignment junction table
 CREATE TABLE device_sensors (
     device_id UUID NOT NULL,
-    sensor_id UUID NOT NULL,
+    sensor_id BIGINT NOT NULL,
     assigned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (device_id, sensor_id),
     FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE,
