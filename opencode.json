@@ -27,7 +27,7 @@
         },
         "lmstudio/mistralai/devstral-small-2-2512": {
           "limit": {
-            "context": 16384,
+            "context": 32768,
             "output": 4096
           }
         },
