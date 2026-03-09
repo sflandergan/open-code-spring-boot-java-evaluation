@@ -109,7 +109,7 @@
             "output": 128000
           }
         },
-        "mistralai/devstral-latest": {
+        "mistral/devstral-latest": {
           "limit": {
             "context": 256000,
             "output": 32000
