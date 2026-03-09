@@ -8,6 +8,9 @@
       "cat *": "allow",
       "diff *": "allow",
       "find *": "allow",
+      "pwd": "allow",
+
+      "date *": "allow",
 
       "git show *": "allow",
       "git log *": "allow",
@@ -142,5 +145,6 @@
       }
     }
   },
-  "model": "lmstudio/qwen/qwen3-coder-30"
+  "model": "lmstudio/qwen/qwen3-coder-30",
+  "small_model": "mistral/devstral-latest"
 }
