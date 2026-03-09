@@ -88,10 +88,7 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "Requesty",
       "options": {
-        "baseURL": "https://router.requesty.ai/v1",
-        "apiKey": {
-          "env": "REQUESTY_API_KEY"
-        }
+        "baseURL": "https://router.requesty.ai/v1"
       },
       "models": {
         "google/gemini-3.1-flash-lite-preview": {
