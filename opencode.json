@@ -52,6 +52,12 @@
             "output": 4096
           }
         },
+        "lmstudio/Qwen3.5-9B-MLX-4bit": {
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        },
         "lmstudio/mistralai/devstral-small-2-2512": {
           "limit": {
             "context": 32768,
