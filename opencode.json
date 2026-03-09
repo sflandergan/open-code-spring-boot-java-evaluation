@@ -77,6 +77,66 @@
           }
         }
       }
+    },
+    "requesty": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Requesty",
+      "options": {
+        "baseURL": "https://router.requesty.ai/v1",
+        "apiKey": {
+          "env": "REQUESTY_API_KEY"
+        }
+      },
+      "models": {
+        "google/gemini-3.1-flash-lite-preview": {
+          "limit": {
+            "context": 1000000,
+            "output": 66000
+          }
+        },
+        "minimaxi/MiniMax-M2.5": {
+          "limit": {
+            "context": 200000,
+            "output": 128000
+          }
+        },
+        "nebius/moonshotai/kimi-k2.5": {
+          "limit": {
+            "context": 256000,
+            "output": 128000
+          }
+        },
+        "mistralai/devstral-latest": {
+          "limit": {
+            "context": 256000,
+            "output": 32000
+          }
+        },
+        "nebius/Qwen/Qwen3-Coder-480B-A35B-Instruct": {
+          "limit": {
+            "context": 262000,
+            "output": 64000
+          }
+        },
+        "alibaba/qwen3.5": {
+          "limit": {
+            "context": 256000,
+            "output": 66000
+          }
+        },
+        "nebius/deepseek-ai/DeepSeek-V3.2": {
+          "limit": {
+            "context": 164000,
+            "output": 128000
+          }
+        },
+        "nebius/openai/gpt-oss-120b": {
+          "limit": {
+            "context": 131000,
+            "output": 128000
+          }
+        }
+      }
     }
   },
   "model": "lmstudio/qwen/qwen3-coder-30"
