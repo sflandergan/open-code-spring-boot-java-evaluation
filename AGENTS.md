@@ -16,6 +16,11 @@
   - Base URL: `/api/sensors`
   - Entities: Sensor (id, name, type, capabilities)
 
+- **Device Management**
+  - Package: `de.sfl.devices`
+  - Base URL: `/api/devices`
+  - Entities: Device (id, name, description, createdAt, updatedAt), DeviceSensor (device_id, sensor_id, assigned_at)
+
 # Managing AGENTS.md Size
 - **Current status**: This file fits comfortably in AI context windows
 - **When to split**: Consider restructuring when this file reaches **~800-1000 lines** or **~40-50K tokens**
