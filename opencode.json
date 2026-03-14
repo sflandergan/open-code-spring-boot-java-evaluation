@@ -138,6 +138,12 @@
             "context": 131000,
             "output": 128000
           }
+        },
+        "nebius/zai-org/GLM-4.7": {
+          "limit": {
+            "context": 200000,
+            "output": 128000
+          }
         }
       }
     }
