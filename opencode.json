@@ -118,16 +118,10 @@
             "output": 32000
           }
         },
-        "nebius/Qwen/Qwen3-Coder-480B-A35B-Instruct": {
+        "nebius/zai-org/GLM-4.7": {
           "limit": {
-            "context": 262000,
-            "output": 64000
-          }
-        },
-        "alibaba/qwen3.5": {
-          "limit": {
-            "context": 256000,
-            "output": 66000
+            "context": 200000,
+            "output": 128000
           }
         },
         "nebius/deepseek-ai/DeepSeek-V3.2": {
@@ -136,10 +130,10 @@
             "output": 128000
           }
         },
-        "nebius/openai/gpt-oss-120b": {
+        "alibaba/qwen3.5": {
           "limit": {
-            "context": 131000,
-            "output": 128000
+            "context": 256000,
+            "output": 66000
           }
         }
       }
