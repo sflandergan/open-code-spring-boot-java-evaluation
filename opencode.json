@@ -140,5 +140,5 @@
     }
   },
   "model": "lmstudio/qwen/qwen3-coder-30",
-  "small_model": "mistral/devstral-latest"
+  "small_model": "github-copilot/gpt-5-mini"
 }
