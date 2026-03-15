@@ -130,10 +130,16 @@
             "output": 128000
           }
         },
-        "alibaba/qwen3.5": {
+        "alibaba/qwen-turbo": {
           "limit": {
             "context": 256000,
             "output": 66000
+          }
+        },
+        "alibaba/qwen3.5": {
+          "limit": {
+            "context": 1000000,
+            "output": 128000
           }
         }
       }
