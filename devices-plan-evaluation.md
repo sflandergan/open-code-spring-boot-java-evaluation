@@ -43,7 +43,7 @@ Before evaluating, the following facts from the codebase were established as gro
 |------|------|-------|:--------------------:|:------------:|:------------:|:------------:|:---------:|
 | 1 | `gh-opus-4.6/devices-plan` | Claude Opus 4.6 | 9 | 9 | 9 | 9 | **36** |
 | 2 | `rq-kimi-k2.5/devices-plan` | Kimi K2.5 | 8 | 9 | 9 | 9 | **35** |
-| 3 | `gh-sonnet-4.6/device-plan` | Claude Sonnet 4.6 | 8 | 8 | 8 | 9 | **33** |
+| 3 | `gh-sonnet-4.6/device-plan` | Claude Sonnet 4.6 | 8 | 9 | 8 | 9 | **34** |
 | 4 | `rq-glm-4.7/devices-plan` | GLM 4.7 | 7 | 8 | 8 | 8 | **31** |
 | 5 | `rq-minimax-2.5/devices-plan` | MiniMax 2.5 | 7 | 8 | 7 | 6 | **28** |
 | 6 | `rq-devstral/devices-plan` | Devstral | 6 | 7 | 7 | 7 | **27** |
@@ -176,7 +176,7 @@ Before evaluating, the following facts from the codebase were established as gro
 ---
 
 ### 3. `gh-sonnet-4.6/device-plan` — Claude Sonnet 4.6
-**Total: 33 / 40**
+**Total: 34 / 40**
 
 #### AGENTS.md Compliance — 8/10
 
@@ -197,7 +197,7 @@ Before evaluating, the following facts from the codebase were established as gro
 - The `PUT /api/devices/{id}/sensors` endpoint accepts a body (`AssignSensorsDto` with a list of IDs), implementing a *full-replace* semantic. This is a reasonable interpretation but diverges from the prompt's stated requirement: "Assign sensors to devices (idempotent **PUT** operation)" which most naturally maps to assigning one sensor at a time via path parameter. This is a design choice but worth flagging.
 - Migration file timestamp uses `V<timestamp>` placeholder — correct guidance is given but no concrete example timestamp is shown.
 
-#### Codebase Fit — 8/10
+#### Codebase Fit — 9/10
 
 **Strengths:**
 - `BIGSERIAL`, `TIMESTAMPTZ`, constraint naming matches existing migration.
@@ -206,9 +206,9 @@ Before evaluating, the following facts from the codebase were established as gro
 - `PageResult<T>` usage.
 - `RepositoryIT` base class.
 - No Lombok.
+- `DeviceDto` returns `Set<Long> sensorIds` — a legitimate design choice (lighter payload, avoids coupling) that the prompt does not prescribe against.
 
-**Issues (-2):**
-- `DeviceDto` shows `Set<Long> sensorIds` — consistent across the plan, but using scalar IDs loses the ability to display sensor names in list responses. Minor design choice, not a compliance issue.
+**Issues (-1):**
 - No `existsByNameAndIdNot` method in the repository to support update uniqueness check — the plan mentions name uniqueness validation for updates in the service but the repository query is missing.
 
 #### Completeness — 8/10
@@ -549,13 +549,13 @@ Before evaluating, the following facts from the codebase were established as gro
 | Issue | Plans Affected |
 |-------|---------------|
 | Cross-package `JpaSensorRepository` injection (layering violation) | Kimi, GLM, MiniMax |
-| UUID instead of BIGSERIAL | Gemini/Baseline, (partial: Baseline) |
-| Lombok usage | Gemini/Baseline |
-| `TIMESTAMP` instead of `TIMESTAMPTZ` | Gemini/Baseline, DeepSeek |
+| UUID instead of BIGSERIAL | Baseline |
+| Lombok usage | Baseline |
+| `TIMESTAMP` instead of `TIMESTAMPTZ` | Baseline, DeepSeek |
 | Missing named FK/PK constraint naming | Devstral, DeepSeek, partial in others |
 | `DeviceController` wired manually as a bean in `@Configuration` | Devstral, Sonnet |
 | `DeviceService` interface + `DeviceServiceImpl` | Devstral |
-| DTOs passed to service layer | Gemini/Baseline |
+| DTOs passed to service layer | Baseline |
 | No JSON model tests | DeepSeek, Qwen |
 | No AGENTS.md update | DeepSeek, Qwen, partial |
 
