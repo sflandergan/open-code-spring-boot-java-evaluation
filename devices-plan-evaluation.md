@@ -39,18 +39,22 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ## Ranking Summary
 
-| Rank | Plan | Model | AGENTS.md Compliance | Codebase Fit | Completeness | Detail Level | **Total** |
-|------|------|-------|:--------------------:|:------------:|:------------:|:------------:|:---------:|
-| 1 | `gh-opus-4.6/devices-plan` | Claude Opus 4.6 | 9 | 9 | 9 | 9 | **36** |
-| 2 | `gh-sonnet-4.6/device-plan` | Claude Sonnet 4.6 | 9 | 9 | 8 | 9 | **35** |
-| 3 | `rq-glm-4.7/devices-plan` | GLM 4.7 | 8 | 8 | 9 | 9 | **34** |
-| 4 | `rq-kimi-k2.5/devices-plan` | Kimi K2.5 | 7 | 8 | 8 | 6 | **29** |
-| 5 | `rq-minimax-2.5/devices-plan` | MiniMax 2.5 | 6 | 8 | 7 | 6 | **27** |
-| 6 | `rq-devstral/devices-plan` | Devstral | 5 | 7 | 7 | 7 | **26** |
-| 7 | `rq-deepseek-3.2/devices-plan` | DeepSeek 3.2 | 3 | 2 | 4 | 3 | **12** |
-| 8 | `rq-qwen-turbo/devices-plan` | Qwen Turbo | 3 | 2 | 2 | 1 | **8** |
+| Rank | Model | AGENTS.md Compliance | Codebase Fit | Completeness | Detail Level | **Total** |
+|------|-------|:--------------------:|:------------:|:------------:|:------------:|:---------:|
+| 1  | Claude Opus 4.6 | 9 | 9 | 9 | 9 | **36** |
+| 2  | Claude Sonnet 4.6 | 9 | 9 | 8 | 9 | **35** |
+| 3  | GLM 4.7 | 8 | 8 | 9 | 9 | **34** |
+| 4  | Kimi K2.5 | 7 | 8 | 8 | 6 | **29** |
+| 5  | MiniMax 2.5 | 6 | 8 | 7 | 6 | **27** |
+| 6  | Devstral | 5 | 7 | 7 | 7 | **26** |
+| —  | Claude Haiku 4.5 *(baseline)* | 5 | 4 | 8 | 8 | **25** |
+| 7  | Nemotron 3 Nano 30B (local) | 3 | 2 | 5 | 4 | **14** |
+| 8  | DeepSeek 3.2 | 3 | 2 | 4 | 3 | **12** |
+| 9  | Devstral Small 2 25.12 (local) | 3 | 2 | 5 | 2 | **12** |
+| 10 | GPT-OSS Safeguard 20B (local) | 2 | 1 | 3 | 3 | **9** |
+| 11 | Qwen Turbo | 3 | 2 | 2 | 1 | **8** |
 
-> **Baseline** (`devices-feature.md`, Claude Haiku 4.5): AGENTS.md Compliance **5**, Codebase Fit **4**, Completeness **8**, Detail Level **8** → Total **25** (reference only)
+> **Note:** The baseline (`devices-feature.md`, Claude Haiku 4.5) is included in the ranking row above for direct comparison. Local LLM plans are marked with *(local)*.
 
 ---
 
@@ -58,7 +62,73 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 1. `gh-opus-4.6/devices-plan` — Claude Opus 4.6
+### Baseline: Claude Haiku 4.5
+**Total: 25 / 40** *(reference baseline)*
+
+#### AGENTS.md Compliance — 5/10
+
+**Strengths:**
+- Package `de.sfl.devices` and base URL `/api/devices` correct.
+- `@Configuration` for bean wiring mentioned.
+- Package-protected repositories.
+- `RepositoryIT` base class referenced.
+- JSON model tests for all three DTOs planned.
+- AGENTS.md update step included.
+- Numbered implementation sequence.
+- Constructor injection, `@Transactional` at class level noted.
+
+**Issues (-5):**
+- **UUID IDs** — the existing codebase uses `BIGSERIAL`/`Long`; UUID is a direct codebase misalignment. The plan even defends it ("Consistent with existing Sensor entities") which is factually wrong.
+- **Lombok** (`@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`) — not used in the codebase; `AGENTS.md` does not mention Lombok.
+- **DTOs passed to service layer** — `createDevice(CreateDeviceDto dto)`, `updateDevice(UUID id, UpdateDeviceDto dto)` — violates the rule that services work with entities, not DTOs.
+- **Wrong service boundary decision** — explicitly states "DeviceService does NOT call SensorService" as a design decision, which is the opposite of the layering rule.
+- `@ControllerAdvice` not scoped to `DeviceController.class`.
+- `TIMESTAMP` not `TIMESTAMPTZ`.
+- No keyset pagination.
+
+#### Codebase Fit — 4/10
+
+**Strengths:**
+- Migration SQL provided with two tables, indexes, FK constraints.
+- `@PrePersist`/`@PreUpdate` lifecycle pattern.
+- Separate junction table for many-to-many.
+
+**Issues (-6):**
+- UUID primary key — `sensors` table uses `BIGSERIAL`; all FK references break if device IDs are UUID while sensor IDs are BIGINT.
+- `TIMESTAMP` instead of `TIMESTAMPTZ`.
+- No named FK/PK constraints (`CONSTRAINT pk_...`, `CONSTRAINT fk_...`).
+- Lombok annotations on entity — diverges from `Sensor.java`.
+- `LocalDateTime` in DTO — existing code uses `Instant`.
+- Separate `DeviceSensorId` embedded key class — adds complexity inconsistent with the simpler `@ManyToMany` / `@JoinTable` pattern used by top plans.
+
+#### Completeness — 8/10
+
+**Strengths:**
+- Migration SQL, Entity, Repository (two repos), Service (all methods), DTOs (three), Controller (5 endpoints), Exception Handler, Configuration, JSON model tests (3), Repository IT (two), Service test, Controller test, AGENTS.md update, full implementation sequence in 7 phases.
+
+**Issues (-2):**
+- No `mvn verify` instruction in the sequence.
+- No keyset pagination / `PageResult<T>` — `getAllDevices()` returns `List<Device>` with no pagination.
+
+#### Detail Level — 8/10
+
+**Strengths:**
+- SQL migration with both tables, FKs, and indexes.
+- Service method signatures with return types.
+- DTO field lists with validation annotations.
+- Controller method-to-endpoint mapping table.
+- Test scenarios listed per class.
+- Design decisions section with explicit rationale per choice.
+- Dependencies section (even if some are wrong).
+- Numbered 7-phase implementation sequence.
+
+**Issues (-2):**
+- Entity described only in prose — no code snippet for `Device.java`.
+- Repository described as bullet list — no interface code or query method signatures.
+
+---
+
+### 1. Claude Opus 4.6
 **Total: 36 / 40**
 
 #### AGENTS.md Compliance — 9/10
@@ -116,7 +186,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 2. `gh-sonnet-4.6/device-plan` — Claude Sonnet 4.6
+### 2. Claude Sonnet 4.6
 **Total: 35 / 40**
 
 #### AGENTS.md Compliance — 9/10
@@ -176,7 +246,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 3. `rq-glm-4.7/devices-plan` — GLM 4.7
+### 3. GLM 4.7
 **Total: 34 / 40**
 
 #### AGENTS.md Compliance — 8/10
@@ -238,7 +308,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 4. `rq-kimi-k2.5/devices-plan` — Kimi K2.5
+### 4. Kimi K2.5
 **Total: 29 / 40**
 
 #### AGENTS.md Compliance — 7/10
@@ -302,7 +372,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 5. `rq-minimax-2.5/devices-plan` — MiniMax 2.5
+### 5. MiniMax 2.5
 **Total: 27 / 40**
 
 #### AGENTS.md Compliance — 6/10
@@ -365,7 +435,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 6. `rq-devstral/devices-plan` — Devstral
+### 6. Devstral
 **Total: 26 / 40**
 
 #### AGENTS.md Compliance — 5/10
@@ -432,7 +502,88 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 7. `rq-deepseek-3.2/devices-plan` — DeepSeek 3.2
+### 7. Nemotron 3 Nano 30B a3b MLX 4bit (local)
+**Total: 14 / 40**
+
+#### AGENTS.md Compliance — 3/10
+
+**Strengths:**
+- Package `de.sfl.devices` correct.
+- Base URL `/api/devices` correct.
+- `RepositoryIT` base class referenced.
+- `mvn verify` step included.
+- `@ControllerAdvice` for exception handling mentioned.
+- Centralized exception handler with correct HTTP codes.
+- `SensorAssignmentRequest` body for sensor assignment endpoint.
+
+**Issues (-7):**
+- **No `@Configuration` bean wiring** — never mentioned; implies `@Service`/`@Component` approach.
+- **Sub-packages** (`model/`, `repository/`, `service/`, `web/`) — `AGENTS.md` requires all feature code in the single feature package `de.sfl.devices`; sub-packages are not part of the pattern.
+- **Wrong DTO naming**: `CreateDeviceRequest`, `UpdateDeviceRequest`, `SensorAssignmentRequest` — `AGENTS.md` requires `Dto` suffix (e.g., `CreateDeviceDto`).
+- **`@SpringBootTest` with in-memory database** for integration tests — the project uses Testcontainers with PostgreSQL, not H2.
+- No keyset pagination — `List<Device> getAllDevices()` implies full table scan.
+- No `protected Long id` / test subclass pattern.
+- No JSON model tests.
+- No GDPR note.
+- No AGENTS.md update step.
+- `@ControllerAdvice` not scoped to `DeviceController.class`.
+- Mentions Spring Security — not in the project.
+
+#### Codebase Fit — 2/10
+
+**Strengths:**
+- `Long` ID type correct.
+- Junction table mentioned.
+- `RepositoryIT` reference.
+
+**Issues (-8):**
+- No SQL schema — cannot verify `BIGSERIAL`, `TIMESTAMPTZ`, or named constraints.
+- Sub-package structure contradicts the codebase convention.
+- Spring Security not in project.
+- In-memory database for integration tests contradicts Testcontainers setup.
+- No `PageResult<T>` reference.
+- No `Instant` timestamps.
+- No `@PrePersist`/`@PreUpdate`.
+- No Lombok avoidance mentioned.
+
+#### Completeness — 5/10
+
+**Strengths:**
+- All major layers present: migration (step only), entity, repo, service, controller, DTOs, exception handler, `@ControllerAdvice`, tests (unit/controller/integration/repository), `mvn verify`.
+- API endpoint table with 6 endpoints.
+- Acceptance criteria section.
+- Numbered implementation phases.
+
+**Issues (-5):**
+- No JSON model tests.
+- No AGENTS.md update step.
+- No configuration class (`DeviceConfiguration`).
+- No pagination planned.
+- In-memory DB for integration tests is structurally wrong.
+- Test section has minimal detail — no per-scenario descriptions.
+
+#### Detail Level — 4/10
+
+**Strengths:**
+- Service method signatures with return types (best of the three local plans).
+- API endpoint table with 6 rows.
+- Implementation phase table with task breakdowns.
+- Acceptance criteria section.
+- Project structure directory tree (though with wrong sub-packages).
+- `mvn verify` instruction.
+
+**Issues (-6):**
+- No SQL migration code.
+- No entity code snippet.
+- No repository interface code.
+- No DTO field definitions.
+- No controller code.
+- No configuration class.
+- No test scenarios — just class-type mentions.
+
+---
+
+### 8. DeepSeek 3.2
 **Total: 12 / 40**
 
 #### AGENTS.md Compliance — 3/10
@@ -485,7 +636,154 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 8. `rq-qwen-turbo/devices-plan` — Qwen Turbo
+### 9. Devstral Small 2 25.12 (local)
+**Total: 12 / 40**
+
+#### AGENTS.md Compliance — 3/10
+
+**Strengths:**
+- Package `de.sfl.devices` correct.
+- Base URL `/api/devices` correct.
+- Package-protected repository mentioned.
+- AGENTS.md update step included.
+
+**Issues (-7):**
+- **Critical violation**: Creates `DeviceService` as an **interface** with `JpaDeviceService` implementing it — directly violates `AGENTS.md` ("Only create interface when there will be multiple implementations. Do not add an `Impl` suffix." — using a technology-based name like `JpaDeviceService` for an interface impl is the exact antipattern warned against).
+- No mention of `@Configuration` bean wiring — implies the standard `@Service`/`@Component` approach.
+- No keyset pagination.
+- No `protected Long id` / test subclass pattern.
+- No JSON model tests — only "DeviceDtoTest" with no marshalling/unmarshalling specifics.
+- No GDPR note.
+- No `ProblemDetail`.
+- No `@RestControllerAdvice` scoping.
+- No layering discussion for `SensorService` vs. `JpaSensorRepository`.
+
+#### Codebase Fit — 2/10
+
+**Strengths:**
+- Mentions Flyway migration step and DATABASE_SCHEMA.md reference.
+- Mentions `JpaRepository` extension.
+
+**Issues (-8):**
+- No SQL schema at all — cannot evaluate `BIGSERIAL`, `TIMESTAMPTZ`, or named constraints.
+- No mention of `Instant` timestamps.
+- No mention of `@PrePersist`/`@PreUpdate`.
+- No `PageResult<T>` reference.
+- No `RepositoryIT` base class reference (only "DeviceRepositoryIT" without indicating the base class).
+- Lombok not explicitly avoided.
+- Plan is too sparse to demonstrate any codebase-specific alignment.
+
+#### Completeness — 5/10
+
+**Strengths:**
+- All major layers present: migration, entity, repo, service, controller, DTOs, config, tests, AGENTS.md update.
+- Implementation order numbered (10 steps).
+
+**Issues (-5):**
+- Only one DTO test planned (`DeviceDtoTest`) — no `CreateDeviceDtoTest` or `UpdateDeviceDtoTest`.
+- No JSON marshalling/unmarshalling test specifics.
+- No exception handler class mentioned.
+- No `ProblemDetail` or `@RestControllerAdvice`.
+- No `mvn verify` step.
+- No pagination endpoint planned.
+- No GET endpoints defined (no list, no get-by-id).
+- Service layer defined as interface only — no indication of how beans are wired.
+
+#### Detail Level — 2/10
+
+**Issues (-8):**
+- No code snippets of any kind.
+- All steps are 1-3 bullet lines of prose.
+- No method signatures, no field lists, no SQL.
+- No repository query methods described.
+- No controller endpoint details beyond a 4-bullet list.
+- No exception class names.
+- No test scenarios — just class name mentions.
+- 73 lines total — the shortest plan in the evaluation.
+
+---
+
+### 10. GPT-OSS Safeguard 20B MLX MXFP4 (local)
+**Total: 9 / 40**
+
+#### AGENTS.md Compliance — 2/10
+
+**Strengths:**
+- Base URL `/api/devices` correct.
+- `AssignSensorsDto` equivalent implied (body with sensor IDs).
+- `@WebMvcTest` for controller tests.
+
+**Issues (-8):**
+- **Critical**: Explicitly uses `@Repository` annotation on the repository interface — `AGENTS.md` forbids `@Repository`/`@Service`/`@Component`.
+- **Critical**: Explicitly uses `@Service` annotation on `DeviceService` — direct violation.
+- No `@Configuration` bean wiring mentioned.
+- No keyset pagination.
+- No `protected Long id` / test subclass pattern.
+- No JSON model tests.
+- No GDPR note.
+- No AGENTS.md update step.
+- No `RepositoryIT` base class reference.
+- No `ProblemDetail`.
+- No `@RestControllerAdvice` scoping.
+- No exception handler class.
+- No named constraints, no migration SQL.
+- Wrong relationship: `@OneToMany(mappedBy = "device")` on `Sensor` — the existing `Sensor` entity has no `device` field; this models the relationship from the wrong side.
+
+#### Codebase Fit — 1/10
+
+**Strengths:**
+- `Long` ID in entity snippet (correct type).
+
+**Issues (-9):**
+- No SQL migration at all — cannot verify `BIGSERIAL`, `TIMESTAMPTZ`, or named constraints.
+- Wrong relationship model: `@OneToMany` from `Device` to `Sensor` implies adding a `device` FK column to the `sensors` table, which contradicts both the existing schema and the many-to-many requirement.
+- `@Service`/`@Repository` annotations are explicitly shown.
+- No `PageResult<T>` reference.
+- No `Instant` timestamps.
+- No `RepositoryIT`.
+- Generic enough to apply to any Spring Boot project — no codebase-specific alignment.
+- 69 lines with no real implementation guidance.
+
+#### Completeness — 3/10
+
+**Strengths:**
+- API endpoint table with 5 endpoints.
+- Mentions unit tests and `@WebMvcTest` controller tests.
+- `Deployment Notes` mentions SpringDoc.
+
+**Issues (-7):**
+- No migration SQL or schema.
+- No exception handler class or exception classes.
+- No configuration class.
+- No JSON model tests.
+- No AGENTS.md update.
+- No implementation order.
+- No `RepositoryIT`.
+- DTOs only named (no fields, no code).
+- No GDPR note.
+- No pagination.
+
+#### Detail Level — 3/10
+
+**Strengths:**
+- Entity code snippet (with errors).
+- Repository interface snippet (with `@Repository` violation).
+- Service method signatures (with `@Service` violation).
+- API endpoint table.
+
+**Issues (-7):**
+- All snippets contain critical annotation violations, making them worse than no snippet at all for implementation guidance.
+- No SQL migration.
+- No DTO field definitions.
+- No controller code.
+- No exception handler.
+- No test scenarios — just a two-line mention.
+- No implementation sequence.
+- 69 lines total.
+
+---
+
+### 11. Qwen Turbo
 **Total: 8 / 40**
 
 #### AGENTS.md Compliance — 3/10
@@ -553,15 +851,19 @@ Before evaluating, the following facts from the codebase were established as gro
 | Issue | Plans Affected |
 |-------|---------------|
 | Cross-package `JpaSensorRepository` injection (layering violation) | Kimi, GLM, MiniMax |
-| UUID instead of BIGSERIAL | Baseline |
-| Lombok usage | Baseline |
+| UUID instead of BIGSERIAL | Baseline (Haiku 4.5) |
+| Lombok usage | Baseline (Haiku 4.5) |
 | `TIMESTAMP` instead of `TIMESTAMPTZ` | Baseline, DeepSeek |
 | Missing named FK/PK constraint naming | Devstral, DeepSeek, partial in others |
 | `DeviceController` wired manually as a bean in `@Configuration` | Devstral, Kimi |
-| `DeviceService` interface + `DeviceServiceImpl` | Devstral |
+| `DeviceService` interface + `DeviceServiceImpl` / `JpaDeviceService` | Devstral (cloud), Devstral Small 2 (local) |
 | DTOs passed to service layer | Baseline |
-| No JSON model tests | DeepSeek, Qwen |
-| No AGENTS.md update | DeepSeek, Qwen, partial |
+| No JSON model tests | DeepSeek, Qwen, all three local plans |
+| No AGENTS.md update | DeepSeek, Qwen, partial; all three local plans |
+| `@Service`/`@Repository` annotations explicitly used | GPT-OSS Safeguard 20B |
+| Sub-packages within feature package | Nemotron 3 Nano 30B |
+| Wrong DTO naming convention (`Request` instead of `Dto`) | Nemotron 3 Nano 30B |
+| In-memory database for integration tests (instead of Testcontainers) | Nemotron 3 Nano 30B |
 
 ### Key Differentiators
 - **Opus** excels at the cross-cutting concerns section, making architectural rationale explicit and actionable. Along with GLM, it uses `@ManyToMany` directly on the entity with `@JoinTable` — no separate junction entity class.
@@ -572,3 +874,5 @@ Before evaluating, the following facts from the codebase were established as gro
 - **MiniMax** is the most concise correct plan — covers all required artifacts but lacks implementation detail beyond DTOs.
 - **DeepSeek** introduces multiple invented requirements (optimistic locking, soft deletes, sensor exclusivity constraint) that would derail implementation.
 - **Qwen** is effectively unusable as an implementation guide.
+- **All three local LLM plans** score in the 9–14 range, well below most cloud plan. The primary failure modes are: no SQL schema, missing `@Configuration` bean wiring, no JSON model tests, no GDPR note, no AGENTS.md update, and insufficient detail to guide implementation. **Devstral Small 2** and **GPT-OSS Safeguard 20B** are the weakest, comparable to Qwen Turbo. **Nemotron 3 Nano 30B** is the best local plan — it has service method signatures, a full API table, `mvn verify`, and `RepositoryIT` reference — but is still far below the cloud baseline.
+- **The Haiku 4.5 baseline**, despite UUID/Lombok/layering violations, substantially outperforms all local plans due to its detailed SQL migration, DTO field definitions, full implementation sequence, and comprehensive test plan. The gap between the baseline (25) and the best local plan (14) is larger than the gap between the baseline and the top cloud plan (36).
