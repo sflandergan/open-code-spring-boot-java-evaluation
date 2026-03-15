@@ -42,11 +42,11 @@ Before evaluating, the following facts from the codebase were established as gro
 | Rank | Plan | Model | AGENTS.md Compliance | Codebase Fit | Completeness | Detail Level | **Total** |
 |------|------|-------|:--------------------:|:------------:|:------------:|:------------:|:---------:|
 | 1 | `gh-opus-4.6/devices-plan` | Claude Opus 4.6 | 9 | 9 | 9 | 9 | **36** |
-| 2 | `rq-kimi-k2.5/devices-plan` | Kimi K2.5 | 8 | 9 | 9 | 9 | **35** |
-| 3 | `gh-sonnet-4.6/device-plan` | Claude Sonnet 4.6 | 8 | 9 | 8 | 9 | **34** |
-| 4 | `rq-glm-4.7/devices-plan` | GLM 4.7 | 7 | 8 | 8 | 8 | **31** |
-| 5 | `rq-minimax-2.5/devices-plan` | MiniMax 2.5 | 7 | 8 | 7 | 6 | **28** |
-| 6 | `rq-devstral/devices-plan` | Devstral | 6 | 7 | 7 | 7 | **27** |
+| 2 | `gh-sonnet-4.6/device-plan` | Claude Sonnet 4.6 | 9 | 9 | 8 | 9 | **35** |
+| 3 | `rq-glm-4.7/devices-plan` | GLM 4.7 | 8 | 8 | 9 | 9 | **34** |
+| 4 | `rq-kimi-k2.5/devices-plan` | Kimi K2.5 | 7 | 8 | 8 | 6 | **29** |
+| 5 | `rq-minimax-2.5/devices-plan` | MiniMax 2.5 | 6 | 8 | 7 | 6 | **27** |
+| 6 | `rq-devstral/devices-plan` | Devstral | 5 | 7 | 7 | 7 | **26** |
 | 7 | `rq-deepseek-3.2/devices-plan` | DeepSeek 3.2 | 3 | 2 | 4 | 3 | **12** |
 | 8 | `rq-qwen-turbo/devices-plan` | Qwen Turbo | 3 | 2 | 2 | 1 | **8** |
 
@@ -100,7 +100,7 @@ Before evaluating, the following facts from the codebase were established as gro
 **Covered:** Migration → Entity → Repository (with keyset pagination queries) → Exceptions → Service (all CRUD + `assignSensor`) → DTOs (Create, Update, Device, with `toEntity()`) → Controller (6 endpoints including GET list/by-id) → Exception Handler → Configuration → JSON model tests → Repository IT → Service unit test → Controller test → AGENTS.md update → Run `mvn verify`.
 
 **Issues (-1):**
-- No `AssignSensorsDto` — the `PUT /{id}/sensors/{sensorId}` takes path parameters only, so this is architecturally fine (and matches the prompt's "assign single sensor" wording), but does not address a bulk-assign variant which would be more flexible. Minor gap as it matches the literal requirement.
+- No `AssignSensorsDto` — the `PUT /{id}/sensors/{sensorId}` takes path parameters only, matching the prompt's literal "assign" wording, but does not provide a way to unassign sensors. Plans using full-replace `PUT /{id}/sensors` with a body (Sonnet, GLM, MiniMax) cover this common operation.
 
 #### Detail Level — 9/10
 
@@ -112,19 +112,19 @@ Before evaluating, the following facts from the codebase were established as gro
 - Cross-cutting concerns section with explicit rationale for layering decisions.
 
 **Issues (-1):**
-- DTO field lists are described in prose rather than code snippets, making them slightly less immediately actionable than code-level plans like GLM or Kimi.
+- DTO field lists are described in prose rather than code snippets, making them slightly less immediately actionable than code-level plans like GLM.
 
 ---
 
 ### 2. `rq-kimi-k2.5/devices-plan` — Kimi K2.5
-**Total: 35 / 40**
+**Total: 29 / 40**
 
-#### AGENTS.md Compliance — 8/10
+#### AGENTS.md Compliance — 7/10
 
 **Strengths:**
 - Correct `BIGSERIAL`, `TIMESTAMPTZ`, named constraints, FK indexes.
 - Package-protected repository.
-- `@Configuration` bean wiring.
+- `@Configuration` bean wiring — explicitly stated in section 6 and in the Notes ("Use explicit @Configuration for beans (no @Service/@Component)").
 - No unnecessary interface for `DeviceService`.
 - Keyset pagination with `PageResult<Device>`.
 - `protected Long id` for test subclass pattern.
@@ -133,13 +133,13 @@ Before evaluating, the following facts from the codebase were established as gro
 - `ProblemDetail` responses.
 - GDPR logging note.
 - AGENTS.md update step.
-- References `RepositoryIT` base class and `@BeforeEach` cleanup.
 
-**Issues (-2):**
-- `DeviceService` is shown directly accessing `JpaSensorRepository` (passed via `DeviceConfiguration`) rather than going through `SensorService`. This breaks the layering rule from `AGENTS.md`: "Services should not directly access repositories from other service packages."
-- The `AssignSensorsDto` has `@NotEmpty` on `sensorIds`, but if the intent is to allow unassigning all sensors, an empty set should be valid — the annotation could be wrong depending on the intended behaviour, though this is a design ambiguity rather than a clear error.
+**Issues (-3):**
+- `DeviceService` is shown directly accessing `JpaSensorRepository` (passed via `DeviceConfiguration`) rather than going through `SensorService`. This breaks the layering rule from `AGENTS.md`.
+- `DeviceConfiguration` wires `DeviceController` as a bean — controllers should not be manually configured as beans.
+- No `AssignSensorsDto` — the assign endpoint uses `PUT /{id}/sensors/{sensorId}` with path parameters only, leaving no way to unassign sensors via the API.
 
-#### Codebase Fit — 9/10
+#### Codebase Fit — 8/10
 
 **Strengths:**
 - SQL closely mirrors the existing sensor migration style.
@@ -148,37 +148,42 @@ Before evaluating, the following facts from the codebase were established as gro
 - `PageResult<T>` usage.
 - `RepositoryIT` base class usage.
 - No Lombok.
-- `existsByName` and `existsByNameAndIdNot` repository methods match the pattern used in the sensor feature.
+- `existsByName` repository method.
 
-**Issues (-1):**
+**Issues (-2):**
 - Injects `JpaSensorRepository` into `DeviceService` via `DeviceConfiguration`, crossing the package boundary.
+- No `existsByNameAndIdNot` method — the plan only lists `existsByName`, leaving the update uniqueness check incomplete.
 
-#### Completeness — 9/10
+#### Completeness — 8/10
 
-**Covered:** Migration, Entity, Repository with keyset pagination, Exceptions, Service, DTOs (incl. `AssignSensorsDto`), Controller (6 endpoints), Exception Handler, Configuration, JSON model tests, Repository IT, Service unit test, Controller test, AGENTS.md update, `mvn verify`.
+**Covered:** Migration, Entity, Repository with keyset pagination, Exceptions, Service, DTOs (3: `DeviceDto`, `CreateDeviceDto`, `UpdateDeviceDto`), Controller (6 endpoints), Exception Handler, Configuration, JSON model tests (3 DTOs), Repository IT, Service unit test, Controller test, AGENTS.md update.
 
-**Issues (-1):**
-- `DeviceDtoTest` mentions round-trip tests but doesn't explicitly note the required `AssignSensorsDtoTest`.
+**Issues (-2):**
+- No `AssignSensorsDto` and no corresponding `AssignSensorsDtoTest`.
+- No `mvn verify` step at the end to confirm everything passes.
 
-#### Detail Level — 9/10
+#### Detail Level — 6/10
 
 **Strengths:**
-- Java code blocks for `DeviceService` showing method signatures and transaction annotations.
-- Full DTO record definitions with validation annotations.
-- Repository interface code with `@Query` and `@Param` annotations.
-- Detailed controller code with OpenAPI annotations.
-- Per-scenario test descriptions (happy path, not found, duplicate name, idempotency).
-- Numbered implementation order with `mvn test` commands.
+- Full DTO record code snippets with validation annotations and `toEntity()` method.
+- Complete API Specification section with full request/response JSON examples for all endpoints.
+- Service method list with read-only/write transaction labels (prose).
+- Numbered implementation order.
+- Error scenario table.
 
-**Issues (-1):**
-- The `DeviceConfiguration` bean wiring code snippet is incomplete — it shows `JpaSensorRepository` injection but the `SensorService` integration path is not shown.
+**Issues (-4):**
+- Service is a prose bullet list of method names with transaction labels — no code block, no actual method signatures, no `@Transactional` annotations.
+- Repository is a prose bullet list of method names — no code block, no `@Query`/`@Param` annotations.
+- Controller is a prose bullet list of endpoints — no code block, no OpenAPI annotations shown.
+- Exception handler, configuration, and entity are described only in prose — no code.
+- Test section lists class names only — no per-scenario descriptions.
 
 ---
 
 ### 3. `gh-sonnet-4.6/device-plan` — Claude Sonnet 4.6
-**Total: 34 / 40**
+**Total: 35 / 40**
 
-#### AGENTS.md Compliance — 8/10
+#### AGENTS.md Compliance — 9/10
 
 **Strengths:**
 - Correct `BIGSERIAL`, `TIMESTAMPTZ`, named constraints, FK indexes.
@@ -187,14 +192,13 @@ Before evaluating, the following facts from the codebase were established as gro
 - No unnecessary interface.
 - Keyset pagination mentioned.
 - Cross-cutting concerns section explicitly addresses: layering (calls `SensorService`, not `JpaSensorRepository`), idempotency, `@Transactional` on mutating methods, no `@Component`/`@Service`, DTOs in controller layer only.
-- Mentions `AssignSensorsDto`.
+- `AssignSensorsDto` with full-replace semantics — passing an empty or reduced set effectively supports unassigning sensors, covering a common real-world operation not explicitly required by the prompt but clearly useful.
 - `ProblemDetail` (RFC 7807) for exception handler.
 - GDPR logging note.
 - AGENTS.md update step.
 - `@RestControllerAdvice(assignableTypes = DeviceController.class)`.
 
-**Issues (-2):**
-- The `PUT /api/devices/{id}/sensors` endpoint accepts a body (`AssignSensorsDto` with a list of IDs), implementing a *full-replace* semantic. This is a reasonable interpretation but diverges from the prompt's stated requirement: "Assign sensors to devices (idempotent **PUT** operation)" which most naturally maps to assigning one sensor at a time via path parameter. This is a design choice but worth flagging.
+**Issues (-1):**
 - Migration file timestamp uses `V<timestamp>` placeholder — correct guidance is given but no concrete example timestamp is shown.
 
 #### Codebase Fit — 9/10
@@ -229,22 +233,23 @@ Before evaluating, the following facts from the codebase were established as gro
 - Cross-cutting concerns section with rationale.
 - Numbered implementation order.
 - Per-test class scenario descriptions.
+- `DeviceConfiguration` code snippet shown in full.
 
 **Issues (-1):**
-- `DeviceConfiguration` bean wiring is shown but `DeviceController` is listed as a bean in the config — controllers should not be manually wired as beans in a `@Configuration` class; Spring picks them up via `@RestController` scanning. This is an error.
+- Entity is described in prose only — no code snippet for the `Device` class itself.
 
 ---
 
 ### 4. `rq-glm-4.7/devices-plan` — GLM 4.7
-**Total: 31 / 40**
+**Total: 34 / 40**
 
-#### AGENTS.md Compliance — 7/10
+#### AGENTS.md Compliance — 8/10
 
 **Strengths:**
 - Correct `BIGSERIAL`, `TIMESTAMPTZ`, named constraints, FK indexes including both `device_id` and `sensor_id` indexes on the join table.
 - Unique constraint on `name` (`uniq_device_name`) explicitly included — good.
 - Package-protected repository.
-- `@Configuration` bean wiring with `Clock` dependency (good pattern from `SERVICE_TESTING.md`).
+- `@Configuration` bean wiring.
 - `protected Long id` explicitly shown.
 - `@PrePersist`/`@PreUpdate` lifecycle pattern.
 - `@ManyToMany` directly on the entity (no separate junction entity).
@@ -253,13 +258,13 @@ Before evaluating, the following facts from the codebase were established as gro
 - `ProblemDetail` responses.
 - Test class names follow the pattern exactly.
 - References `RepositoryIT`.
-- `AssignSensorsDto` included.
+- `AssignSensorsDto` included — full-replace semantics implicitly support unassigning sensors by sending a reduced set.
 - `@RestControllerAdvice(assignableTypes = DeviceController.class)`.
 - Per-scenario test descriptions.
+- GDPR compliance note in Design Considerations ("Never log device IDs or personal data").
 
-**Issues (-3):**
+**Issues (-2):**
 - `DeviceService` injects `JpaSensorRepository` directly, violating the cross-package repository access rule.
-- The `DeviceConfiguration` bean wiring snippet passes a `Clock` to `DeviceService`, but the `Sensor.java` reference implementation uses `@PrePersist`/`@PreUpdate` not a `Clock` — importing an unnecessary pattern.
 - Migration timestamp placeholder is not a concrete example.
 
 #### Codebase Fit — 8/10
@@ -274,53 +279,52 @@ Before evaluating, the following facts from the codebase were established as gro
 
 **Issues (-2):**
 - `JpaSensorRepository` injection crosses package boundary.
-- `Clock` injection in service is inconsistent with how the entity handles timestamps (via `@PrePersist`/`@PreUpdate`), creating confusion about where timestamps are managed.
+- `Clock` injection in `DeviceService` is inconsistent with the existing codebase: `Sensor.java` uses `Instant.now()` inside `@PrePersist`/`@PreUpdate`, not a `Clock` bean. Introducing a `Clock` dependency here diverges from the established pattern.
 
-#### Completeness — 8/10
+#### Completeness — 9/10
 
-**Covered:** Migration, Entity, Repository with keyset pagination and `@EntityGraph`, Exceptions, Service, DTOs (all 4), Controller (6 endpoints), Exception Handler, Configuration, JSON model tests (all 4 DTOs), Repository IT, Service unit test, Controller test, AGENTS.md update, implementation steps, `mvn test` commands.
+**Covered:** Migration, Entity, Repository with keyset pagination and `@EntityGraph`, Exceptions, Service, DTOs (all 4), Controller (6 endpoints), Exception Handler, Configuration, JSON model tests (all 4 DTOs), Repository IT, Service unit test, Controller test, AGENTS.md update, implementation steps, `mvn test` commands, `mvn verify`.
 
-**Issues (-2):**
+**Issues (-1):**
 - No mention of `existsByNameAndIdNot` for update uniqueness validation.
-- Missing explicit GDPR logging note (present in AGENTS.md as a key requirement).
 
-#### Detail Level — 8/10
+#### Detail Level — 9/10
 
 **Strengths:**
-- Full Java code blocks for entity, repository interface, all DTOs, controller, configuration, exception handler, and exception classes.
+- Full Java code blocks for entity, repository interface (with `@Query`/`@Param` annotations), all DTOs, controller (with OpenAPI annotations), configuration, exception handler, and exception classes.
+- Service code shows `@Transactional(readOnly = true)` and `@Transactional` annotations with method signatures.
 - Test scenarios listed per test class.
-- Numbered implementation steps with `mvn test` commands.
-- Design considerations section.
-- Naming convention note.
+- Numbered implementation steps with `mvn test` and `mvn verify` commands.
+- Design considerations section explaining key decisions.
 
-**Issues (-2):**
-- Service code is shown only as a method outline without return types or `@Transactional` annotations — less actionable than Kimi or Opus.
-- `mvn verify` run at the end is not mentioned.
+**Issues (-1):**
+- Service method bodies are comment stubs — the concrete logic (pagination, validation, assignment) is not shown, making it slightly less actionable than Opus for the service layer.
 
 ---
 
 ### 5. `rq-minimax-2.5/devices-plan` — MiniMax 2.5
-**Total: 28 / 40**
+**Total: 27 / 40**
 
-#### AGENTS.md Compliance — 7/10
+#### AGENTS.md Compliance — 6/10
 
 **Strengths:**
 - Correct `BIGSERIAL`, `TIMESTAMPTZ`, named constraints (`pk_devices`, `fk_device_sensors_devices`, `fk_device_sensors_sensors`), FK indexes on both columns of the join table.
 - Package-protected repository.
 - Keyset pagination methods in repository.
-- `@Configuration` bean wiring — no `@Service`/`@Component`.
 - No unnecessary interface.
 - `AssignSensorsDto` with full-replace semantics.
+- `AssignSensorsDto` with full-replace semantics — `PUT /{id}/sensors` with a body supports unassigning sensors by sending a reduced set, covering a common real-world operation.
 - Service methods list with transaction annotations.
 - GDPR compliance note.
 - AGENTS.md update step.
 - `RepositoryIT` base class referenced.
 
-**Issues (-3):**
+**Issues (-4):**
 - Service injects `JpaSensorRepository` directly from another package — crosses package boundary.
 - No mention of `protected Long id` / test subclass pattern from `ENTITY_TEST_DATA.md`.
 - No mention of `ProblemDetail` — exception handler design is described only in terms of HTTP codes without mentioning the response body format.
 - Migration timestamp placeholder is non-specific.
+- `@Configuration` bean wiring is not stated — the plan names `DeviceConfiguration.java` in the file tree and implementation order, but never specifies `@Configuration` or confirms the absence of `@Service`/`@Component`.
 
 #### Codebase Fit — 8/10
 
@@ -362,14 +366,13 @@ Before evaluating, the following facts from the codebase were established as gro
 ---
 
 ### 6. `rq-devstral/devices-plan` — Devstral
-**Total: 27 / 40**
+**Total: 26 / 40**
 
-#### AGENTS.md Compliance — 6/10
+#### AGENTS.md Compliance — 5/10
 
 **Strengths:**
 - Correct `BIGSERIAL`, `TIMESTAMPTZ`.
 - Package-protected repository.
-- `@Configuration` bean wiring.
 - Keyset pagination explicitly noted.
 - `@RestControllerAdvice` scoped to `DeviceController`.
 - `ProblemDetail` responses.
@@ -378,11 +381,12 @@ Before evaluating, the following facts from the codebase were established as gro
 - Layering rule for `SensorService` access explicitly mentioned.
 - `AssignSensorsDto`.
 
-**Issues (-4):**
+**Issues (-5):**
 - **Critical violation**: Creates `DeviceService` as an interface with `DeviceServiceImpl` implementing it. `AGENTS.md` is explicit: "Only create interface when there will be multiple implementations or requirements from a framework. Do not add an `Impl` suffix." This is a direct violation.
 - Named FK constraints are missing in the migration SQL — uses bare `FOREIGN KEY` syntax without `CONSTRAINT` names.
 - `DeviceConfiguration` wires `DeviceController` as a bean — controllers should not be manually configured as beans.
 - No mention of `existsByNameAndIdNot` for update uniqueness.
+- `@Configuration` bean wiring is not explicitly stated — the plan names `DeviceConfiguration.java` but never specifies `@Configuration` or confirms the absence of `@Service`/`@Component`.
 
 #### Codebase Fit — 7/10
 
@@ -553,17 +557,18 @@ Before evaluating, the following facts from the codebase were established as gro
 | Lombok usage | Baseline |
 | `TIMESTAMP` instead of `TIMESTAMPTZ` | Baseline, DeepSeek |
 | Missing named FK/PK constraint naming | Devstral, DeepSeek, partial in others |
-| `DeviceController` wired manually as a bean in `@Configuration` | Devstral, Sonnet |
+| `DeviceController` wired manually as a bean in `@Configuration` | Devstral, Kimi |
 | `DeviceService` interface + `DeviceServiceImpl` | Devstral |
 | DTOs passed to service layer | Baseline |
 | No JSON model tests | DeepSeek, Qwen |
 | No AGENTS.md update | DeepSeek, Qwen, partial |
 
 ### Key Differentiators
-- **Opus** excels at the cross-cutting concerns section, making architectural rationale explicit and actionable.
-- **Kimi** provides the most complete Java code snippets, making it the most immediately actionable for implementation.
-- **Sonnet** introduces the cleanest bulk-assign API design (`PUT /{id}/sensors` with body) and has the most complete cross-cutting concerns discussion.
-- **GLM** is the only plan to include `@EntityGraph` for avoiding N+1 queries on the sensor relationship and unique constraint on device name in the DB schema.
-- **MiniMax** is the most concise correct plan — good for quick reference but lacks test detail.
+- **Opus** excels at the cross-cutting concerns section, making architectural rationale explicit and actionable. Along with GLM, it uses `@ManyToMany` directly on the entity with `@JoinTable` — no separate junction entity class.
+- **Sonnet** has the most complete `DeviceConfiguration` code, the cleanest bulk-assign API design (`PUT /{id}/sensors` with body enabling unassignment), and the strongest cross-cutting concerns discussion.
+- **GLM** provides the most complete Java code examples overall, including transaction details, controller methods with OpenAPI annotations, `@Query`/`@Param` repository methods, configuration, and exception handling — the most immediately actionable plan for implementation. Like Opus, uses `@ManyToMany` directly on the entity.
+- **GLM** is the only plan to include `@EntityGraph` for avoiding N+1 queries on the sensor relationship and a unique constraint on device name in the DB schema.
+- **Kimi** stands out for its detailed API Specification section with full request/response JSON examples for all endpoints. However, most implementation sections (service, repository, controller, entity) are prose bullet lists with no code.
+- **MiniMax** is the most concise correct plan — covers all required artifacts but lacks implementation detail beyond DTOs.
 - **DeepSeek** introduces multiple invented requirements (optimistic locking, soft deletes, sensor exclusivity constraint) that would derail implementation.
 - **Qwen** is effectively unusable as an implementation guide.
