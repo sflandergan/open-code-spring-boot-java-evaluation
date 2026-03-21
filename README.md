@@ -1,334 +1,240 @@
-# Spring Boot Template
+# LLM Evaluation — Hobby Coding on Mac M4 Mini
 
-A production-ready Spring Boot template following domain-driven design principles with a package-by-feature approach. This template provides a solid foundation for building RESTful web services with best practices baked in.
+This repository evaluates the practical usefulness of local and cloud LLMs for hobby software development on a **Mac M4 Mini with 32 GB RAM**. The goal is to find the best model for everyday feature development given real-world constraints: cost, speed, and code quality.
 
 ## Table of Contents
 
-- [Architecture](#architecture)
-- [Getting Started](#getting-started)
-  - [Creating a New Project from This Template](#creating-a-new-project-from-this-template)
-  - [Running the Application Locally](#running-the-application-locally)
-- [Technologies](#technologies)
-- [Building and Testing](#building-and-testing)
-- [Working with AGENTS.md](#working-with-agentsmd)
-- [Developing Features with AI Assistants](#developing-features-with-ai-assistants)
-- [Features](#features)
+- [Goal](#goal)
+- [Setup](#setup)
+- [Evaluation Task](#evaluation-task)
+- [Models Evaluated](#models-evaluated)
+- [Results: Planning Phase](#results-planning-phase)
+- [Results: Implementation Phase](#results-implementation-phase)
+- [Models That Failed Early](#models-that-failed-early)
+- [Recommendations](#recommendations)
+- [Repository Structure](#repository-structure)
 
-## Architecture
+---
 
-This template follows a **layered architecture** with clear separation of concerns:
+## Goal
 
-- **Interfaces Layer** (REST Controllers) - Handles HTTP requests/responses
-- **Services Layer** - Contains business logic
-- **Infrastructure Layer** (Repositories) - Handles data persistence
+To answer the question: **Which LLM is best suited for a hobby programmer using a Mac M4 Mini?**
 
-The project uses a **package-by-feature** approach, where each feature is self-contained in its own package with all related components (controllers, services, repositories, DTOs, configurations).
+The evaluation focuses on:
 
-## Getting Started
-
-### Prerequisites
+- **Local models** — run entirely on-device via LM Studio (no API costs, private, but limited by hardware)
+- **Cloud models** — accessed via GitHub Copilot and [Requesty](https://requesty.ai) (API costs apply, more capable)
 
-- **Java 21** or later
-- **Maven 3.9+**
-- **Docker** (for integration tests and containerization)
+The task is a realistic feature request in a non-trivial Spring Boot codebase with strict architectural rules defined in `AGENTS.md`.
 
-### Running the Application Locally
+---
 
-1. **Start the PostgreSQL database** using Maven:
-   ```bash
-   mvn docker:start -Ddocker.filter=postgres
-   ```
-   
-   This starts a PostgreSQL container with the configuration from `pom.xml` (database: `testdb`, user: `testuser`, password: `testpass`).
+## Setup
 
-2. **Configure database connection** (optional):
-   
-   The default configuration in `config/application.yml` works with the PostgreSQL container started above.
+**Hardware**: Apple Mac M4 Mini, 32 GB unified memory
 
-3. **Run the application**:
+**Tool**: [OpenCode](https://opencode.ai) — AI coding agent for the terminal
 
-   **Option A: Using Maven**
-   ```bash
-   mvn spring-boot:run
-   ```
+**Local model runtime**: LM Studio
 
-   **Option B: From your IDE**
-   - Open the main application class (e.g., `TemplateApplication.java`)
-   - Run it as a Java application (usually via right-click → Run)
+**Cloud access**: GitHub Copilot (Claude models) and Requesty (various providers)
 
-4. **Access the application**:
-   - API: http://localhost:8080
-   - Swagger UI: http://localhost:8080/swagger-ui.html
-   - Actuator Health: http://localhost:8080/actuator/health
+---
 
-5. **Stop the database** when done:
-   ```bash
-   mvn docker:stop -Ddocker.filter=postgres
-   ```
+## Evaluation Task
 
-## Technologies
+Each model was given a two-shot task:
 
-### Java 21
+### Shot 1 — Planning
 
-This project uses Java 21 with modern language features:
-- **Records** for immutable data carriers (DTOs, entities)
-- **Sealed classes** for controlled type hierarchies
-- **Pattern matching** for cleaner conditional logic
-- **Text blocks** for multi-line strings
+> We need a new feature for managing devices. It should have a REST API to:
+> - Create devices
+> - Assign sensors to devices (idempotent PUT operation)
+> - Update devices
+> - Delete devices
+>
+> A device has the following properties: Name, Description
+>
+> Create an implementation plan and store it as markdown named `devices-feature.md`.
 
-### Spring Boot 3.5.7
+### Shot 2 — Implementation
 
-The application leverages Spring Boot 3.x features:
-- **Auto-configuration** for rapid development
-- **Dependency injection** via constructor injection
-- **Spring Boot Starters** for streamlined dependency management
-- **Configuration properties** with `@ConfigurationProperties` for type-safe configuration
+> Implement the plan defined in `@devices-feature.md`.
 
-### Spring Web MVC
+**Note**: All models implemented based on the same baseline plan (Claude Haiku 4.5's output) to ensure a fair comparison of coding ability independent of planning quality.
 
-RESTful API implementation using Spring Web MVC:
-- **REST Controllers** with `@RestController` and `@RequestMapping`
-- **Request validation** using Bean Validation (`@Valid`, `@NotNull`, etc.)
-- **Exception handling** with `@ControllerAdvice` and `@ExceptionHandler`
-- **Content negotiation** for JSON responses
-- **Springdoc OpenAPI** for automatic API documentation at `/swagger-ui.html`
+### Scoring
 
-### PostgreSQL 17
+The implementation was scored out of **40 points** across test coverage, code quality, AGENTS.md compliance, and correctness. See [`devices-plan-evaluation.md`](devices-plan-evaluation.md) for the detailed planning rubric and scores.
 
-PostgreSQL is used as the primary relational database:
-- **Spring Data JPA** for ORM and repository abstraction
-- **JDBC driver** for database connectivity
-- **Connection pooling** via HikariCP (default in Spring Boot)
+---
 
-### Flyway
+## Models Evaluated
 
-Database migration management with Flyway:
-- **Version-controlled schema changes** in `src/main/resources/db/migration/`
-- **Migration naming convention**: `VYYYYMMDDHHmm_description.sql` (e.g., `V202511140900_add_sensor_table.sql`)
-- **Automatic migration execution** on application startup
-- **Idempotent migrations** for safe re-execution
+### Local (free, on-device)
 
-### TestContainers
+| Model | LM Studio ID |
+|-------|-------------|
+| Devstral Small 2 25.12 | `mistralai/devstral-small-2-2512` |
+| GPT-OSS Safeguard 20B MLX MXFP4 | `gpt-oss-safeguard-20b-MLX-MXFP4` |
+| Nemotron 3 Nano 30B A3B MLX 4bit | `NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-4bit` |
+| Gemma 3 27B 4bit | `google/gemma-3-27b` (4bit) |
+| Gemma 3 12B 4bit | `google/gemma-3-12b` (4bit) |
 
-Integration testing with real database instances:
-- **PostgreSQL TestContainers** for repository integration tests
-- **Automatic container lifecycle management** (start/stop)
-- **Isolated test environments** with no shared state
-- **Base class `RepositoryIT`** for consistent test setup
-- See `docs/patterns/REPOSITORY_TESTING.md` for detailed patterns
+### Cloud via GitHub Copilot
 
-### Docker Maven Plugin
+| Model | Cost structure |
+|-------|----------------|
+| Claude Haiku 4.5 | Flat subscription |
+| Claude Sonnet 4.6 | Flat subscription |
+| Claude Opus 4.6 | Flat subscription |
 
-Fabric8 Docker Maven Plugin for containerization and integration testing:
-- **Multi-architecture builds** (linux/amd64, linux/arm64) using BuildKit
-- **Automated container orchestration** during Maven lifecycle
-- **PostgreSQL container** for integration tests
-- **Application container** with debug port (5005) enabled
-- **Container logs** captured in `target/postgres-container.log` and `target/application-container.log`
-- **Health checks** via Spring Boot Actuator endpoints
+### Cloud via Requesty
 
-## Building and Testing
+| Model | Provider |
+|-------|----------|
+| MiniMax M2.5 | MiniMaxAI |
+| Kimi K2.5 | Moonshot AI (via Nebius) |
+| Devstral | Mistral AI |
+| GLM 4.7 | Zhipu AI (via Nebius) |
+| Qwen3 Coder 480B | Alibaba |
+| Qwen Turbo | Alibaba |
 
-### Build the Application
+---
 
-```bash
-# Compile and package (skips tests)
-mvn clean package -DskipTests
+## Results: Planning Phase
 
-# Build Docker image
-mvn clean package
-```
+The planning prompt asked each model to produce a structured implementation plan.
 
-The Docker image will be built as `sensorinsight/template:latest` and `sensorinsight/template:0.1.0-SNAPSHOT`.
+| Model | Type | Time | Cost | Plan Score |
+|-------|------|------|------|-----------|
+| **Claude Opus 4.6** | GitHub | 3m 8s | subscription | **36/40** |
+| **Claude Sonnet 4.6** | GitHub | 2m 23s | subscription | **35/40** |
+| **GLM 4.7** | Requesty | 2m 57s | ~$0.25 | **34/40** |
+| **Kimi K2.5** | Requesty | 35s | ~$0.10 | **29/40** |
+| **MiniMax M2.5** | Requesty | 1m 37s | ~$0.02 | **27/40** |
+| **Devstral** | Requesty | 17s | ~$0.01 | **26/40** |
+| **Claude Haiku 4.5** *(baseline)* | GitHub | 35s | subscription | **25/40** |
+| **Nemotron 3 Nano 30B** | Local | 1m 42s | free | **14/40** |
+| **Devstral Small 2** | Local | 1m 28s | free | **12/40** |
+| **GPT-OSS Safeguard 20B** | Local | 2m 41s | free | **9/40** |
+| **Qwen Turbo** | Requesty | 58s | <$0.01 | **8/40** |
 
-### Running Tests
+> See [`devices-plan-evaluation.md`](devices-plan-evaluation.md) for detailed per-model analysis and scoring breakdown.
 
-#### Unit Tests Only
+---
 
-```bash
-# Run all unit tests
-mvn test
+## Results: Implementation Phase
 
-# Run a specific test class
-mvn test -Dtest=SensorControllerTest
+All models implemented the feature using the Claude Haiku 4.5 plan as a shared baseline.
 
-# Run a specific test method
-mvn test -Dtest=SensorControllerTest#createSensor_shouldReturn201
-```
+| Model | Type | Time | Cost | Impl Score | Notes |
+|-------|------|------|------|-----------|-------|
+| **Claude Sonnet 4.6** | GitHub | 10m | subscription | **33/40** | Fully implemented, self-corrected Lombok usage |
+| **Claude Haiku 4.5** | GitHub | 13m | subscription | **31/40** | Needed a second prompt to fix startup issues |
+| **GLM 4.7** | Requesty | 12m | ~$0.52 | **29/40** | Fully implemented |
+| **Kimi K2.5** | Requesty | 6m | ~$1.74 | **25/40** | Fully implemented, fastest cloud |
+| **MiniMax M2.5** | Requesty | 12m | ~$0.24 | **25/40** | Fully implemented |
+| **Devstral** | Requesty | 28m | ~$2.46 | **24/40** | Fully implemented but slow and expensive |
+| **Claude Opus 4.6** | GitHub | 12m | subscription | **26/40** | Fully implemented |
+| **Nemotron 3 Nano 30B** | Local | 54m | free | **13/40** | Very slow, stopped without feedback |
+| **GPT-OSS Safeguard 20B** | Local | 18m | free | **5/40** | Did not use Java 21 features, needed constant prompting |
+| **Gemma 3 27B 4bit** | Local | 30m | free | **5/40** | Could not write to src folder, used Lombok |
+| **Gemma 3 12B 4bit** | Local | ~30m | free | **5/40** | Only partially implemented classes |
+| **Devstral Small 2** | Local | stopped | free | **0/40** | Stopped after 54m without any output |
+| **Qwen3 Coder 480B** | Requesty | aborted (6m) | ~$0.52 | **8/40** | Aborted due to continuous wrong folder access |
+| **Qwen Turbo** | Requesty | 12m | ~$0.16 | **4/40** | Repeated tool call failures |
 
-#### Integration Tests
+---
 
-Integration tests use TestContainers to spin up real PostgreSQL instances:
+## Models That Failed Early
 
-```bash
-# Run all tests (unit + integration)
-mvn verify
+Several models were tested but failed so severely that full evaluation was not meaningful:
 
-# Run a specific integration test
-mvn verify -Dit.test=JpaSensorRepositoryIT
-```
+| Model | Type | Failure Reason |
+|-------|------|----------------|
+| Qwen3 Coder 30B | Local | Constant context compactions and crashes |
+| Qwen3-vl-8b | Local | Not tested (vision model, wrong use case) |
+| Qwen3.5 27B 4bit | Local | Stuck reading AGENTS.md (did not finish after 40 minutes) |
+| Qwen3.5 9B | Local | Stuck reading AGENTS.md |
+| Gemini 3.1 Flash Lite | Requesty | Failed to call tools consistently |
+| DeepSeek V3.2 | Requesty | Failed to create a plan; 0/40 on implementation |
 
-#### Full Build with Docker Integration Tests
+---
 
-```bash
-# Run all tests including Docker-based integration tests
-mvn clean verify
-```
+## Recommendations
 
-This will:
-1. Compile the application
-2. Run unit tests
-3. Package the application as a JAR
-4. Build a Docker image
-5. Start PostgreSQL and application containers
-6. Run integration tests against the containerized application
-7. Stop and remove containers
+### Best Overall: Claude Sonnet 4.6 (GitHub Copilot)
 
-**Note**: Container logs are saved to:
-- `target/postgres-container.log` - PostgreSQL container logs
-- `target/template-container.log` - Application container logs
+With a flat GitHub Copilot subscription, Sonnet 4.6 delivers the second-best planning score (35/40) and the best implementation score (33/40) in just 10 minutes. It self-corrects style issues (e.g., Lombok vs records), reads the codebase accurately, and produces fully working code. At a flat subscription price shared across all usage, this is the clearest recommendation for a hobbyist.
 
-These logs are invaluable for debugging test failures.
+### Best Value Cloud: MiniMax M2.5 (Requesty)
 
-### Debugging Integration Tests
+For pure pay-per-use cost, MiniMax M2.5 is the most economical option that fully implements the feature: ~$0.02 for planning and ~$0.24 for a complete implementation (25/40). The score is lower than the top tier but the feature was fully functional.
 
-If `mvn verify` fails, check the container logs:
+### Best Local Option: Nemotron 3 Nano 30B
 
-```bash
-# View PostgreSQL logs
-cat target/postgres-container.log
+No local model came close to matching the cloud models. Nemotron 3 Nano 30B was the best local performer (13/40) but took 54 minutes and stopped without feedback. **Local models on a Mac M4 Mini 32 GB are not viable for this kind of structured, multi-file Spring Boot feature development** — they lack the context handling, tool-calling reliability, and instruction-following needed.
 
-# View application logs
-cat target/template-container.log
-```
+### Avoid (Poor Quality/Value)
 
-### Manual Docker Container Management
+- **Devstral (Requesty)**: Most expensive cloud option (~$2.46 for implementation) with mediocre results (24/40).
+- **GLM 4.7**: Strong planning (34/40) but the $0.25 planning cost + $0.52 implementation cost adds up, with results slightly behind Sonnet.
+- **Qwen Turbo**: Cheapest cloud option but consistently failed at tool calling — not usable.
+- **All local models**: Unreliable tool calling, wrong Java style, very slow.
 
-```bash
-# Start containers manually
-mvn docker:start
+### Summary Table
 
-# Stop containers manually
-mvn docker:stop
+| Model | Total Cost (plan + impl) | Impl Score | Verdict |
+|-------|--------------------------|-----------|---------|
+| Claude Sonnet 4.6 | subscription | 33/40 | **Best choice** |
+| Claude Haiku 4.5 | subscription | 31/40 | Good, cheaper subscription tier |
+| Claude Opus 4.6 | subscription | 26/40 | Surprisingly worse impl than Sonnet |
+| MiniMax M2.5 | ~$0.26 | 25/40 | **Best pay-per-use value** |
+| Kimi K2.5 | ~$1.84 | 25/40 | Fast but expensive |
+| GLM 4.7 | ~$0.77 | 29/40 | Good quality, moderate cost |
+| Devstral (Requesty) | ~$2.47 | 24/40 | Expensive for mediocre results |
+| Nemotron 3 Nano 30B | free | 13/40 | Best local, still not usable |
+| Other local models | free | ≤5/40 | Not viable |
 
-# View running containers
-docker ps
-```
+---
 
-## Working with AGENTS.md
-
-### For Developers
-
-The `AGENTS.md` file contains comprehensive instructions for AI coding assistants (like GitHub Copilot, Cursor, Windsurf or other LLM-based tools). This file helps maintain consistency when AI assistants generate or modify code.
-
-**Important Guidelines:**
-
-1. **Keep AGENTS.md Updated**: When you introduce new technologies, architectural decisions, or implementation patterns, update `AGENTS.md` accordingly.
-
-2. **Document Key Decisions**: Include:
-   - New frameworks or libraries
-   - Architectural patterns (e.g., event-driven, CQRS)
-   - Naming conventions
-   - Testing strategies
-   - Error handling approaches
-   - Security practices
-
-3. **Be Concise**: AGENTS.md has size limitations (typically 8-16KB depending on the AI tool). Focus on:
-   - High-level architectural decisions
-   - Non-obvious patterns and conventions
-   - Common pitfalls and how to avoid them
-   - Links to detailed documentation in `docs/patterns/`
-
-4. **Reference External Docs**: For detailed patterns, create separate files in `docs/patterns/` and reference them from AGENTS.md. Examples:
-   - `docs/patterns/PAGINATION.md` - Keyset pagination implementation
-   - `docs/patterns/REPOSITORY_TESTING.md` - Repository testing guidelines
-
-5. **Review Regularly**: As the project evolves, review AGENTS.md to ensure it reflects current practices and remove outdated information.
-
-### What to Include in AGENTS.md
-
-✅ **Do Include:**
-- Project structure and package organization
-- Layered architecture rules
-- Code style preferences (method length, naming, etc.)
-- Testing requirements (when to write tests, naming conventions)
-- Technology-specific guidelines (Spring Boot, JPA, etc.)
-- Common commands (build, test, run)
-
-❌ **Don't Include:**
-- Detailed API documentation (use Swagger/OpenAPI)
-- Step-by-step tutorials (use README.md or separate docs)
-- Boilerplate code examples (link to pattern docs instead)
-- Project history or changelog (use Git history)
-
-### Size Management Tips
-
-If AGENTS.md grows too large:
-1. Move detailed patterns to `docs/patterns/` and link them
-2. Remove redundant information
-3. Use bullet points instead of paragraphs
-4. Focus on "what" and "why", not "how" (code examples in pattern docs)
-
-## Developing Features with AI Assistants
-
-This template is designed to work seamlessly with AI coding assistants. You can develop complete features with a single, well-structured prompt.
-
-### Sample Prompt
-
-Here's an example prompt that demonstrates how to request a complete feature implementation:
+## Repository Structure
 
 ```
-Add a new feature for managing sensor groups.
-It should have a REST API to:
-- Create sensor groups
-- Assign sensors to sensor groups (idempotent put operation)
-- Update sensor groups
-- Delete sensor groups
-A sensor group has the following properties:
-- Name
+.
+├── README.md                        # This file
+├── AGENTS.md                        # AI assistant instructions for this codebase
+├── devices-feature.md               # Baseline implementation plan (Claude Haiku 4.5)
+├── devices-plan-evaluation.md       # Detailed planning phase evaluation
+├── opencode.json                    # OpenCode configuration (models, providers)
+├── pom.xml                          # Maven project descriptor
+├── config/                          # Application configuration
+├── docs/patterns/                   # Architectural pattern documentation
+└── src/                             # Spring Boot application source
+    ├── main/java/de/sfl/
+    │   ├── sensors/                 # Example feature (Sensor management)
+    │   └── ...
+    └── test/
 ```
 
-The AI assistant will:
-1. Create the feature package following the package-by-feature structure
-2. Implement REST controllers with proper HTTP methods and status codes
-3. Create service layer with business logic
-4. Set up JPA repositories with appropriate queries
-5. Define DTOs for requests and responses
-6. Create database migration scripts
-7. Write controller tests and repository integration tests
-8. Update AGENTS.md with the new feature documentation
+### Branch Structure
 
-### Tips for Effective Prompts
+Each model's output lives in its own branch:
 
-- **Be specific about the API operations** you need (CRUD, custom queries, etc.)
-- **List entity properties** clearly, including data types if they're not obvious
-- **Mention relationships** between entities (e.g., "A sensor group can contain multiple sensors")
-- **Specify validation rules** if you have specific requirements (e.g., "Name must be unique")
-- **Request additional features** like pagination, filtering, or sorting if needed
+| Branch pattern | Description |
+|----------------|-------------|
+| `gh-<model>/device-feature` | GitHub Copilot model implementation |
+| `rq-<model>/devices-feature` | Requesty model implementation |
+| `<model>/devices-feature` | Local model implementation |
+| `evaluation-summary` | Merged evaluation documents |
 
-The AI assistant will follow all guidelines in `AGENTS.md` to ensure consistency with the project's architecture and coding standards.
+### Technologies
 
-## Features
-
-This template includes an example features to demonstrate the architecture:
-
-### Sensor Management
-- **Package**: `sfl.sensorinsight.template.sensors`
-- **Base URL**: `/api/sensors`
-- **Entities**: Sensor (id, name, type, capabilities)
-
-Each feature follows the same structure:
-- REST Controller for HTTP endpoints
-- Service for business logic
-- Repository for data access
-- DTOs for request/response
-- Integration tests for repositories
-- Unit tests for controllers
-
-## Additional Resources
-
-- **API Documentation**: http://localhost:8080/swagger-ui.html (when running)
-- **Spring Boot Documentation**: https://docs.spring.io/spring-boot/docs/current/reference/html/
-- **Spring Data JPA**: https://docs.spring.io/spring-data/jpa/docs/current/reference/html/
-- **Flyway Documentation**: https://flywaydb.org/documentation/
-- **TestContainers**: https://www.testcontainers.org/
+- **Java 21** with records, sealed classes, pattern matching
+- **Spring Boot 3.x** with constructor injection and `@Configuration` beans
+- **PostgreSQL 17** with Flyway migrations
+- **Spring Data JPA** with keyset pagination
+- **TestContainers** for repository integration tests
+- **MockMvc** for controller tests
+- **Springdoc OpenAPI** for API documentation
