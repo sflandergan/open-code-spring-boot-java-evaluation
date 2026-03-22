@@ -202,7 +202,8 @@ Rather than looking for a single best model, the more useful question is: **whic
 
 ### Planning: Claude Opus 4.6 or Claude Sonnet 4.6 (GitHub Copilot)
 
-Opus produces the best plans (36/40), with the strongest architectural reasoning, explicit cross-cutting concerns, and the most accurate codebase alignment. Sonnet follows closely (35/40) with the cleanest API design and most complete configuration examples. Both are on a flat GitHub Copilot subscription, so there is no per-use cost to choose the stronger planner.
+Opus produces the best plans (36/40), with the strongest architectural reasoning, explicit cross-cutting concerns, and the most accurate codebase alignment. 
+Sonnet follows closely (35/40) with the cleanest API design and most complete configuration examples. Both are on a flat GitHub Copilot subscription, so there is no per-use cost to choose the stronger planner.
 
 For pay-per-use, **GLM 4.7** is the best cloud planner at ~$0.25 per plan (34/40), with detailed Java code examples and a rich test plan.
 
@@ -225,11 +226,13 @@ Use **GLM 4.7** for planning (~$0.25 via Requesty) and **MiniMax M2.5** for impl
 
 ### Local Models
 
-No local model came close to matching cloud models. Devstral Small 2 scored highest locally (13/40) but only produced the data layer — no service, controller, or DTOs. Nemotron 3 Nano 30B (11/40) took 54 minutes and stopped without feedback. Gemma 3 12B failed entirely due to constant tool call failures. **Local models on a Mac M4 Mini 32 GB are not viable for this kind of structured, multi-file Spring Boot feature development** — they lack the context handling, tool-calling reliability, and instruction-following needed for either planning or implementation.
+No local model came close to matching cloud models. 
+Devstral Small 2 scored highest locally (13/40) but only produced the data layer — no service, controller, or DTOs. 
+Nemotron 3 Nano 30B (11/40) took 54 minutes and stopped without feedback. Gemma 3 12B failed entirely due to constant tool call failures. 
+**Local models on a Mac M4 Mini 32 GB are not viable for this kind of structured, multi-file Spring Boot feature development** — they lack the context handling, tool-calling reliability, and instruction-following needed for either planning or implementation.
 
 ### Models to Avoid
 
-- **Devstral (Requesty)**: Most expensive cloud option (~$2.46 for implementation) with mediocre results (24/40).
 - **Qwen Turbo**: Cheapest cloud option but consistently failed at tool calling — not usable for either role.
 - **All local models**: Unreliable tool calling, wrong Java style, very slow.
 
@@ -277,7 +280,6 @@ Each model's output lives in its own branch:
 | `gh-<model>/device-feature` | GitHub Copilot model implementation |
 | `rq-<model>/devices-feature` | Requesty model implementation |
 | `<model>/devices-feature` | Local model implementation |
-| `evaluation-summary` | Merged evaluation documents |
 
 ### Technologies
 
