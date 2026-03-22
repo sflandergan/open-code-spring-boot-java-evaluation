@@ -1,6 +1,7 @@
 # LLM Evaluation — Hobby Coding on Mac M4 Mini
 
-This repository evaluates the practical usefulness of local and cloud LLMs for hobby software development on a **Mac M4 Mini with 32 GB RAM**. The goal is to find the best model for everyday feature development given real-world constraints: cost, speed, and code quality.
+This repository evaluates the practical usefulness of local and cloud LLMs for hobby software development on a **Mac M4 Mini with 32 GB RAM**. 
+The goal is to find a suitable setup for everyday feature development given real-world constraints: cost, speed, and code quality.
 
 ## Table of Contents
 
@@ -18,7 +19,7 @@ This repository evaluates the practical usefulness of local and cloud LLMs for h
 
 ## Goal
 
-To answer the question: **Which LLM is best suited for a hobby programmer using a Mac M4 Mini?**
+To answer the question: **Which LLMs are well suited for a hobby programmer using a Mac M4 Mini?**
 
 The evaluation focuses on:
 
@@ -47,25 +48,38 @@ Each model was given a two-shot task:
 
 ### Shot 1 — Planning
 
-> We need a new feature for managing devices. It should have a REST API to:
-> - Create devices
-> - Assign sensors to devices (idempotent PUT operation)
-> - Update devices
-> - Delete devices
->
-> A device has the following properties: Name, Description
->
-> Create an implementation plan and store it as markdown named `devices-feature.md`.
+Each model was asked to produce a reviewable implementation plan to be used as a baseline for implementing the feature step by step.
+The following prompt was used:
+
+```
+We need a new feature for managing devices. It should have a REST API to:
+- Create devices
+- Assign sensors to devices (idempotent PUT operation)
+- Update devices
+- Delete devices
+
+A device has the following properties: Name, Description
+
+Create an implementation plan and store it as markdown named `devices-feature.md`.
+```
+
+Note, that the plan is quite short and leaves some open questions.
+In a real world example, you would probably add more details and a feedback loop question like:
+
+```
+Before creating the plan ask me questions that will improve the result.
+```
 
 ### Shot 2 — Implementation
 
-> Implement the plan defined in `@devices-feature.md`.
+This step translates the plan into code.
+The prompt can be simple since all details are in the plan:
+
+```
+Implement the plan defined in `@devices-feature.md`.
+```
 
 **Note**: All models implemented based on the same baseline plan (Claude Haiku 4.5's output) to ensure a fair comparison of coding ability independent of planning quality.
-
-### Scoring
-
-The implementation was scored out of **40 points** across test coverage, code quality, AGENTS.md compliance, and correctness. See [`devices-plan-evaluation.md`](devices-plan-evaluation.md) for the detailed planning rubric and scores.
 
 ---
 
@@ -73,32 +87,47 @@ The implementation was scored out of **40 points** across test coverage, code qu
 
 ### Local (free, on-device)
 
+Only models fitting within the 32 GB memory limit and optimized for MLX were tested.
+Some models were removed from detailed evaluation due to significant integration issues with OpenCode.
+
 | Model | LM Studio ID |
 |-------|-------------|
-| Devstral Small 2 25.12 | `mistralai/devstral-small-2-2512` |
-| GPT-OSS Safeguard 20B MLX MXFP4 | `gpt-oss-safeguard-20b-MLX-MXFP4` |
-| Nemotron 3 Nano 30B A3B MLX 4bit | `NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-4bit` |
-| Gemma 3 27B 4bit | `google/gemma-3-27b` (4bit) |
-| Gemma 3 12B 4bit | `google/gemma-3-12b` (4bit) |
+| Devstral Small 2 25.12 | [mistralai/devstral-small-2-2512](https://lmstudio.ai/models/mistralai/devstral-small-2-2512) |
+| GPT-OSS Safeguard 20B MLX MXFP4 | [gpt-oss-safeguard-20b-MLX-MXFP4](https://lmstudio.ai/models/openai/gpt-oss-safeguard-20b) |
+| Nemotron 3 Nano 30B A3B MLX 4bit | [NVIDIA-Nemotron-3-Nano-30B-A3B-MLX-4bit](https://lmstudio.ai/models/nvidia/nemotron-3-nano) |
+| Gemma 3 12B 4bit | [google/gemma-3-12b](https://lmstudio.ai/models/google/gemma-3-12b) |
 
 ### Cloud via GitHub Copilot
 
-| Model | Cost structure |
+[Github Copilot's Pro subscription](https://github.com/features/copilot/plans) gives access to various LLMs well suited for development.
+The pricing is prompt-based, with each model consuming a different number of prompt credits.
+The evaluation was limited to Anthropic's models based on previous experiences.
+
+| Model | Costs |
 |-------|----------------|
-| Claude Haiku 4.5 | Flat subscription |
-| Claude Sonnet 4.6 | Flat subscription |
-| Claude Opus 4.6 | Flat subscription |
+| Claude Haiku 4.5 | 1 credit worth $0.03 - $0.04 |
+| Claude Sonnet 4.6 | 1 credit worth $0.03 - $0.04 |
+| Claude Opus 4.6 | 3 credits worth $0.03 - $0.04 |
 
 ### Cloud via Requesty
 
-| Model | Provider |
-|-------|----------|
-| MiniMax M2.5 | MiniMaxAI |
-| Kimi K2.5 | Moonshot AI (via Nebius) |
-| Devstral | Mistral AI |
-| GLM 4.7 | Zhipu AI (via Nebius) |
-| Qwen3 Coder 480B | Alibaba |
-| Qwen Turbo | Alibaba |
+[Requesty](https://www.requesty.ai/) is a gateway to different LLM providers similar to [OpenRouter](https://openrouter.ai/).
+Requesty was picked to fulfill the side goal of finding an European alternative to OpenRouter.
+The pricing is based on input and output tokens, with some models supporting caching to reduce costs.
+Expensive, proprietary models were not evaluated.
+
+| Model | Provider | Costs (Input, Output, Cache write, Cache read) |
+|-------|----------|----------------|
+| MiniMax M2.5 | MiniMaxAI | $0.30/M $1.20/M $1.20/M $0.060/M |
+| Kimi K2.5 | Moonshot AI (via Nebius) | $0.500/M $2.50/M - - |
+| Devstral | Mistral AI | $0.400/M $2.00/M - - |
+| GLM 4.7 | Zhipu AI (via Nebius) | $0.400/M $2.00/M - - |
+| Qwen3 Coder 480B | Alibaba | $0.400/M $1.60/M - - |
+| Qwen Turbo | Alibaba | $0.050/M $0.200/M - - |
+
+**Notes**: Devstral was free when starting the evaluation. 
+Requesty changed this during the evaluation.
+GLM 4.7 has been tested in favor of GLM 5 since it was available on a European provider.
 
 ---
 
@@ -108,14 +137,15 @@ The planning prompt asked each model to produce a structured implementation plan
 
 | Model | Type | Time | Cost | Plan Score |
 |-------|------|------|------|-----------|
-| **Claude Opus 4.6** | GitHub | 3m 8s | subscription | **36/40** |
-| **Claude Sonnet 4.6** | GitHub | 2m 23s | subscription | **35/40** |
+| **Claude Opus 4.6** | GitHub | 3m 8s | $0.09 - $0.12 (subscription) | **36/40** |
+| **Claude Sonnet 4.6** | GitHub | 2m 23s | $0.03 - $0.04 (subscription) | **35/40** |
 | **GLM 4.7** | Requesty | 2m 57s | ~$0.25 | **34/40** |
 | **Kimi K2.5** | Requesty | 35s | ~$0.10 | **29/40** |
 | **MiniMax M2.5** | Requesty | 1m 37s | ~$0.02 | **27/40** |
 | **Devstral** | Requesty | 17s | ~$0.01 | **26/40** |
-| **Claude Haiku 4.5** *(baseline)* | GitHub | 35s | subscription | **25/40** |
+| **Claude Haiku 4.5** *(baseline)* | GitHub | 35s | $0.03 - $0.04 (subscription) | **25/40** |
 | **Nemotron 3 Nano 30B** | Local | 1m 42s | free | **14/40** |
+| **DeepSeek-V3.2** | Requesty | 42s | $0.05 | **12/40** |
 | **Devstral Small 2** | Local | 1m 28s | free | **12/40** |
 | **GPT-OSS Safeguard 20B** | Local | 2m 41s | free | **9/40** |
 | **Qwen Turbo** | Requesty | 58s | <$0.01 | **8/40** |
@@ -130,20 +160,23 @@ All models implemented the feature using the Claude Haiku 4.5 plan as a shared b
 
 | Model | Type | Time | Cost | Impl Score | Notes |
 |-------|------|------|------|-----------|-------|
-| **Claude Sonnet 4.6** | GitHub | 10m | subscription | **33/40** | Fully implemented, self-corrected Lombok usage |
-| **Claude Haiku 4.5** | GitHub | 13m | subscription | **31/40** | Needed a second prompt to fix startup issues |
-| **GLM 4.7** | Requesty | 12m | ~$0.52 | **29/40** | Fully implemented |
-| **Kimi K2.5** | Requesty | 6m | ~$1.74 | **25/40** | Fully implemented, fastest cloud |
-| **MiniMax M2.5** | Requesty | 12m | ~$0.24 | **25/40** | Fully implemented |
-| **Devstral** | Requesty | 28m | ~$2.46 | **24/40** | Fully implemented but slow and expensive |
-| **Claude Opus 4.6** | GitHub | 12m | subscription | **26/40** | Fully implemented |
-| **Nemotron 3 Nano 30B** | Local | 54m | free | **13/40** | Very slow, stopped without feedback |
-| **GPT-OSS Safeguard 20B** | Local | 18m | free | **5/40** | Did not use Java 21 features, needed constant prompting |
-| **Gemma 3 27B 4bit** | Local | 30m | free | **5/40** | Could not write to src folder, used Lombok |
-| **Gemma 3 12B 4bit** | Local | ~30m | free | **5/40** | Only partially implemented classes |
-| **Devstral Small 2** | Local | stopped | free | **0/40** | Stopped after 54m without any output |
-| **Qwen3 Coder 480B** | Requesty | aborted (6m) | ~$0.52 | **8/40** | Aborted due to continuous wrong folder access |
-| **Qwen Turbo** | Requesty | 12m | ~$0.16 | **4/40** | Repeated tool call failures |
+| **Claude Sonnet 4.6** | GitHub | 10m | $0.03 - $0.04 (subscription) | **34/40** | Fully implemented, self-corrected Lombok usage, correct cross-feature layering |
+| **GLM 4.7** | Requesty | 12m | ~$0.52 | **33/40** | Fully implemented, richest sensor response via JPA graph traversal |
+| **Claude Haiku 4.5** | GitHub | 13m | $0.03 - $0.04 (subscription) | **30/40** | Needed a second prompt to fix startup issues; sensor list always empty in response |
+| **Claude Opus 4.6** | GitHub | 12m | $0.09 - $0.12 (subscription) | **28/40** | Fully implemented, bypassed layering rule via DB exception catch |
+| **Kimi K2.5** | Requesty | 6m | ~$1.74 | **27/40** | Fully implemented, fastest cloud; critical `findAll().stream().filter()` performance bug |
+| **MiniMax M2.5** | Requesty | 12m | ~$0.24 | **26/40** | Fully implemented; sensor names/types missing from response despite being mapped |
+| **Devstral** | Requesty | 28m | free* | **24/40** | Fully implemented but sensor retrieval left as hardcoded empty list placeholder |
+| **Devstral Small 2** | Local | 54m | free | **13/40** | Only data layer implemented; no service, controller, or DTOs |
+| **DeepSeek-V3.2** | Requesty | aborted (6m) | ~$0.52 | **8/40** | Aborted; only partial data layer, no service or controller |
+| **Nemotron 3 Nano 30B** | Local | 54m | free | **11/40** | Very slow, stopped without feedback; wrong sensor ID type, no tests |
+| **GPT-OSS Safeguard 20B** | Local | 18m | free | **5/40** | Used `@Service`/`@Component`, needed constant prompting |
+| **Qwen Turbo** | Requesty | 12m | ~$0.16 | **4/40** | Repeated tool call failures; code written to wrong directories, broke the build |
+
+**Notes**: Devstral was free when starting the evaluation. 
+Requesty changed this during the evaluation.
+
+> See [`devices-implementation-evaluation.md`](devices-implementation-evaluation.md) for detailed per-model analysis and scoring breakdown.
 
 ---
 
@@ -153,49 +186,65 @@ Several models were tested but failed so severely that full evaluation was not m
 
 | Model | Type | Failure Reason |
 |-------|------|----------------|
-| Qwen3 Coder 30B | Local | Constant context compactions and crashes |
-| Qwen3-vl-8b | Local | Not tested (vision model, wrong use case) |
-| Qwen3.5 27B 4bit | Local | Stuck reading AGENTS.md (did not finish after 40 minutes) |
-| Qwen3.5 9B | Local | Stuck reading AGENTS.md |
+| [Qwen3 Coder 30B](https://lmstudio.ai/models/qwen/qwen3-coder-30b) | Local | Constant context compactions and crashes |
+| [Qwen3.5 27B 4bit](https://huggingface.co/mlx-community/Qwen3.5-27B-4bit) | Local | Stuck reading AGENTS.md (did not finish after 40 minutes) |
+| [Qwen3.5 9B](https://lmstudio.ai/models/qwen/qwen3.5-9b) | Local | Stuck reading AGENTS.md |
+| [LFM2 24B A2B](https://lmstudio.ai/models/liquid/lfm2-24b-a2b) | Local | Failed to call tools properly |
+| [GLM-4.6V-Flash 8Bit](https://lmstudio.ai/models/glm-4.6v-flash) | Local | Stuck in thinking |
+| Gemma 3 12B 4bit | Local | Constant tool call failures |
 | Gemini 3.1 Flash Lite | Requesty | Failed to call tools consistently |
-| DeepSeek V3.2 | Requesty | Failed to create a plan; 0/40 on implementation |
 
 ---
 
 ## Recommendations
 
-### Best Overall: Claude Sonnet 4.6 (GitHub Copilot)
+Rather than looking for a single best model, the more useful question is: **which model is best for each role in your workflow?** Planning and implementation are different tasks — a model that writes excellent plans does not necessarily write the best code, and vice versa.
 
-With a flat GitHub Copilot subscription, Sonnet 4.6 delivers the second-best planning score (35/40) and the best implementation score (33/40) in just 10 minutes. It self-corrects style issues (e.g., Lombok vs records), reads the codebase accurately, and produces fully working code. At a flat subscription price shared across all usage, this is the clearest recommendation for a hobbyist.
+### Planning: Claude Opus 4.6 or Claude Sonnet 4.6 (GitHub Copilot)
 
-### Best Value Cloud: MiniMax M2.5 (Requesty)
+Opus produces the best plans (36/40), with the strongest architectural reasoning, explicit cross-cutting concerns, and the most accurate codebase alignment. Sonnet follows closely (35/40) with the cleanest API design and most complete configuration examples. Both are on a flat GitHub Copilot subscription, so there is no per-use cost to choose the stronger planner.
 
-For pure pay-per-use cost, MiniMax M2.5 is the most economical option that fully implements the feature: ~$0.02 for planning and ~$0.24 for a complete implementation (25/40). The score is lower than the top tier but the feature was fully functional.
+For pay-per-use, **GLM 4.7** is the best cloud planner at ~$0.25 per plan (34/40), with detailed Java code examples and a rich test plan.
 
-### Best Local Option: Nemotron 3 Nano 30B
+### Implementation: Claude Sonnet 4.6 (GitHub Copilot)
 
-No local model came close to matching the cloud models. Nemotron 3 Nano 30B was the best local performer (13/40) but took 54 minutes and stopped without feedback. **Local models on a Mac M4 Mini 32 GB are not viable for this kind of structured, multi-file Spring Boot feature development** — they lack the context handling, tool-calling reliability, and instruction-following needed.
+Sonnet 4.6 produces the best implementation (34/40), self-corrects style issues, correctly uses `SensorService` for cross-feature validation, and completes in ~10 minutes. On a flat subscription this has no marginal cost.
 
-### Avoid (Poor Quality/Value)
+For pay-per-use implementation, **GLM 4.7** (~$0.52, 33/40) is the strongest alternative and the only other model to return full sensor details in the API response.
+
+### Recommended Setup
+
+**Subscription (GitHub Copilot):**
+Use **Opus 4.6** or **Sonnet 4.6** to produce the plan, review and adjust it, then use **Sonnet 4.6** to implement. Both models on the same flat subscription — no extra cost for the two-step workflow.
+
+**Pay-per-use (Requesty):**
+Use **GLM 4.7** for planning (~$0.25) and implementation (~$0.52). Total cost per feature: ~$0.77. The quality gap vs. subscription models is modest.
+
+**Best value hybrid:**
+Use **GLM 4.7** for planning (~$0.25 via Requesty) and **MiniMax M2.5** for implementation (~$0.24). Total ~$0.49 per feature — the lowest cost for a fully functional result.
+
+### Local Models
+
+No local model came close to matching cloud models. Devstral Small 2 scored highest locally (13/40) but only produced the data layer — no service, controller, or DTOs. Nemotron 3 Nano 30B (11/40) took 54 minutes and stopped without feedback. Gemma 3 12B failed entirely due to constant tool call failures. **Local models on a Mac M4 Mini 32 GB are not viable for this kind of structured, multi-file Spring Boot feature development** — they lack the context handling, tool-calling reliability, and instruction-following needed for either planning or implementation.
+
+### Models to Avoid
 
 - **Devstral (Requesty)**: Most expensive cloud option (~$2.46 for implementation) with mediocre results (24/40).
-- **GLM 4.7**: Strong planning (34/40) but the $0.25 planning cost + $0.52 implementation cost adds up, with results slightly behind Sonnet.
-- **Qwen Turbo**: Cheapest cloud option but consistently failed at tool calling — not usable.
+- **Qwen Turbo**: Cheapest cloud option but consistently failed at tool calling — not usable for either role.
 - **All local models**: Unreliable tool calling, wrong Java style, very slow.
 
 ### Summary Table
 
-| Model | Total Cost (plan + impl) | Impl Score | Verdict |
-|-------|--------------------------|-----------|---------|
-| Claude Sonnet 4.6 | subscription | 33/40 | **Best choice** |
-| Claude Haiku 4.5 | subscription | 31/40 | Good, cheaper subscription tier |
-| Claude Opus 4.6 | subscription | 26/40 | Surprisingly worse impl than Sonnet |
-| MiniMax M2.5 | ~$0.26 | 25/40 | **Best pay-per-use value** |
-| Kimi K2.5 | ~$1.84 | 25/40 | Fast but expensive |
-| GLM 4.7 | ~$0.77 | 29/40 | Good quality, moderate cost |
-| Devstral (Requesty) | ~$2.47 | 24/40 | Expensive for mediocre results |
-| Nemotron 3 Nano 30B | free | 13/40 | Best local, still not usable |
-| Other local models | free | ≤5/40 | Not viable |
+| Role | Model | Cost | Score | Notes |
+|------|-------|------|-------|-------|
+| **Planning** | Claude Opus 4.6 | subscription | 36/40 | Best plan quality |
+| **Planning** | Claude Sonnet 4.6 | subscription | 35/40 | Best API design |
+| **Planning** | GLM 4.7 | ~$0.25 | 34/40 | Best pay-per-use planner |
+| **Implementation** | Claude Sonnet 4.6 | subscription | 34/40 | Best implementation quality |
+| **Implementation** | GLM 4.7 | ~$0.52 | 33/40 | Best pay-per-use implementer |
+| **Implementation** | Claude Haiku 4.5 | subscription | 30/40 | Good, lower subscription tier |
+| **Implementation** | Claude Opus 4.6 | subscription | 28/40 | Weaker than Sonnet or Haiku on implementation |
+| **Implementation** | MiniMax M2.5 | ~$0.24 | 26/40 | Lowest cost for a fully functional result |
 
 ---
 
@@ -207,6 +256,7 @@ No local model came close to matching the cloud models. Nemotron 3 Nano 30B was 
 ├── AGENTS.md                        # AI assistant instructions for this codebase
 ├── devices-feature.md               # Baseline implementation plan (Claude Haiku 4.5)
 ├── devices-plan-evaluation.md       # Detailed planning phase evaluation
+├── devices-implementation-evaluation.md  # Detailed implementation phase evaluation
 ├── opencode.json                    # OpenCode configuration (models, providers)
 ├── pom.xml                          # Maven project descriptor
 ├── config/                          # Application configuration
