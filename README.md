@@ -7,9 +7,9 @@ The goal is to find a suitable setup for everyday feature development given real
 
 **Best setup**: Use a [GitHub Copilot Pro subscription](https://github.com/features/copilot/plans) ($10/month) with **Claude Sonnet 4.6** for both planning and implementation. It scored highest on implementation (34/40), produced the best plan after Opus (35/40), and completes a full feature in ~12 minutes across two prompts.
 
-**On a budget**: Use [Requesty](https://requesty.ai) with **GLM 4.7** for both planning and implementation at ~$0.77/feature — nearly matching subscription quality (34/40 plan, 33/40 implementation).
+**On a budget**: Use [Requesty](https://requesty.ai) with **GLM 4.7** for planning and **MiniMax M2.5** for implementation at ~$0.49/feature — the cheapest combination that produces a fully functional result (34/40 plan, 26/40 implementation).
 
-**Local models don't work**: No local model on a Mac M4 Mini 32 GB produced a usable result. The best local implementation scored 13/40 and took 54 minutes.
+**Local models are insufficient for this workflow**: No local model on a Mac M4 Mini 32 GB produced a fully working result under these conditions. The best local implementation scored 13/40 and took 54 minutes. Simpler tasks, smaller context, or better model/hardware fit may yield different results — but that is out of scope for this evaluation.
 
 ### Tier Overview
 
@@ -17,7 +17,7 @@ The goal is to find a suitable setup for everyday feature development given real
 |------|--------|:----:|:----:|:----------------:|:----:|
 | **Recommended** | Claude Sonnet 4.6 | 35 | 34 | $10/mo · ~$0.03/prompt † | ~12m |
 | **Recommended** | Claude Opus 4.6 (planning only) | 36 | 28 | $10/mo · ~$0.09/prompt † | ~15m |
-| **Strong alternative** | GLM 4.7 | 34 | 33 | ~$0.77 | ~15m |
+| **Strong alternative** | GLM 4.7 | 34 | 33 | ~$2.71 | ~15m |
 | **Viable** | Claude Haiku 4.5 | 25 | 30 | $10/mo · ~$0.03/prompt † | ~14m |
 | **Viable** | MiniMax M2.5 | 27 | 26 | ~$0.26 | ~14m |
 | **Viable** | Kimi K2.5 | 29 | 27 | ~$1.84 | ~7m |
@@ -179,16 +179,30 @@ The pricing is based on input and output tokens. The table below shows the **act
 
 | Model | Provider | Planning cost | Implementation cost | Total per feature |
 |-------|----------|:-------------:|:-------------------:|:-----------------:|
-| GLM 4.7 | Zhipu AI (via Nebius) | ~$0.25 | ~$0.52 | **~$0.77** |
+| GLM 4.7 | Zhipu AI (via Nebius) | ~$0.25 | ~$2.46 | **~$2.71** |
 | Kimi K2.5 | Moonshot AI (via Nebius) | ~$0.10 | ~$1.74 | **~$1.84** |
 | DeepSeek-V3.2 | DeepSeek | ~$0.05 | ~$0.52 (aborted) | **~$0.57** |
 | Devstral | Mistral AI | ~$0.01 | free* | **~$0.01** |
 | MiniMax M2.5 | MiniMaxAI | ~$0.02 | ~$0.24 | **~$0.26** |
-| Qwen3 Coder 480B | Alibaba | evaluated planning only | - | - |
 | Qwen Turbo | Alibaba | <$0.01 | ~$0.16 | **~$0.17** |
 
-**Notes**: Devstral was free when starting the evaluation. Requesty changed this during the evaluation.
+**Notes**: Devstral was free when starting the evaluation. 
+Requesty changed this during the evaluation.
 GLM 4.7 has been tested in favor of GLM 5 since it was available on a European provider.
+
+### Models That Failed Early
+
+Several models were tested but failed so severely that full evaluation was not meaningful:
+
+| Model | Type | Failure Reason |
+|-------|------|----------------|
+| [Qwen3 Coder 30B](https://lmstudio.ai/models/qwen/qwen3-coder-30b) | Local | Constant context compactions and crashes |
+| [Qwen3.5 27B 4bit](https://huggingface.co/mlx-community/Qwen3.5-27B-4bit) | Local | Stuck reading AGENTS.md (did not finish after 40 minutes) |
+| [Qwen3.5 9B](https://lmstudio.ai/models/qwen/qwen3.5-9b) | Local | Stuck reading AGENTS.md |
+| [LFM2 24B A2B](https://lmstudio.ai/models/liquid/lfm2-24b-a2b) | Local | Failed to call tools properly |
+| [GLM-4.6V-Flash 8Bit](https://lmstudio.ai/models/glm-4.6v-flash) | Local | Stuck in thinking |
+| Gemma 3 12B 4bit | Local | Constant tool call failures |
+| Gemini 3.1 Flash Lite | Requesty | Failed to call tools consistently |
 
 ---
 
@@ -215,7 +229,7 @@ The planning prompt asked each model to produce a structured implementation plan
 
 - **Opus and Sonnet dominate**: Both produce detailed, architecturally sound plans that closely follow the project's conventions. Opus excels at cross-cutting concerns; Sonnet has the cleanest API design.
 - **GLM 4.7 is the best pay-per-use planner** at ~$0.25, providing the most complete Java code examples and the only plan to include `@EntityGraph` for N+1 prevention.
-- **A massive gap separates cloud from local**: The best local plan (Nemotron, 14/40) scores below even the weakest cloud plan baseline (Haiku, 25/40). Local models consistently miss SQL schemas, `@Configuration` wiring, JSON model tests, and GDPR logging.
+- **A significant gap separates cloud from local for this workflow**: The best local plan (Nemotron, 14/40) scores below even the weakest cloud plan baseline (Haiku, 25/40). For a task with this level of context and architectural constraints, local models consistently miss SQL schemas, `@Configuration` wiring, JSON model tests, and GDPR logging.
 - **DeepSeek invented requirements** (optimistic locking, soft deletes) that would derail implementation — a model that adds scope unprompted is risky for structured workflows.
 
 > See [`devices-plan-evaluation.md`](devices-plan-evaluation.md) for detailed per-model analysis and scoring breakdown.
@@ -229,7 +243,7 @@ All models implemented the feature using the Claude Haiku 4.5 plan as a shared b
 | Model | Type | Time | Cost | Impl Score | Notes |
 |-------|------|------|------|:----------:|-------|
 | **Claude Sonnet 4.6** | GitHub | 10m | subscription | **34/40** | Fully implemented, self-corrected Lombok usage, correct cross-feature layering |
-| **GLM 4.7** | Requesty | 12m | ~$0.52 | **33/40** | Fully implemented, richest sensor response via JPA graph traversal |
+| **GLM 4.7** | Requesty | 12m | ~$2.46 | **33/40** | Fully implemented, richest sensor response via JPA graph traversal |
 | **Claude Haiku 4.5** | GitHub | 13m | subscription | **30/40** | Needed a second prompt to fix startup issues; sensor list always empty in response |
 | **Claude Opus 4.6** | GitHub | 12m | subscription | **28/40** | Fully implemented, bypassed layering rule via DB exception catch |
 | **Kimi K2.5** | Requesty | 6m | ~$1.74 | **27/40** | Fully implemented, fastest cloud; critical `findAll().stream().filter()` performance bug |
@@ -247,7 +261,7 @@ All models implemented the feature using the Claude Haiku 4.5 plan as a shared b
 - **GLM 4.7 produced the richest API response** — the only model besides Sonnet to return full sensor details (id, name, type, capabilities) rather than just IDs or empty lists.
 - **Opus plans well but implements worse than Sonnet or Haiku** — it caught a `DataIntegrityViolationException` as a proxy for sensor validation, bypassing the layering rule. Planning ability does not predict implementation quality.
 - **Kimi was the fastest cloud model (6 min)** but shipped a critical `findAll().stream().filter()` performance bug that would break at scale.
-- **Local models are not viable**: The best local implementation (Devstral Small 2, 13/40) only produced the data layer after 54 minutes. No local model produced a working feature.
+- **Local models are insufficient for this workflow**: The best local implementation (Devstral Small 2, 13/40) only produced the data layer after 54 minutes. No local model produced a working feature under these conditions — though simpler tasks or lower-context scenarios may be more tractable.
 
 > See [`devices-implementation-evaluation.md`](devices-implementation-evaluation.md) for detailed per-model analysis and scoring breakdown.
 
@@ -296,7 +310,7 @@ For a complete plan + implementation cycle:
 | Model | Total time | Combined score | Cost |
 |-------|:----------:|:--------------:|:----:|
 | Claude Sonnet 4.6 | ~12m | 69/80 | subscription |
-| GLM 4.7 | ~15m | 67/80 | ~$0.77 |
+| GLM 4.7 | ~15m | 67/80 | ~$2.71 |
 | Kimi K2.5 | ~7m | 56/80 | ~$1.84 |
 | Claude Haiku 4.5 | ~14m | 55/80 | subscription |
 
@@ -310,27 +324,35 @@ The key question for hobby coders: **is a GitHub Copilot subscription worth it, 
 
 #### GitHub Copilot Pro ($10/month)
 
-- **300 premium requests** included per month
-- Haiku and Sonnet cost **1 request** each; Opus costs **3 requests**
-- Extra requests cost **$0.04** each
-- This evaluation used **2 prompts per feature** (plan + implementation)
+GitHub Copilot Pro costs $10/month and includes **300 premium requests**.
+Each request costs $10 / 300 = **~$0.033**.
+Haiku and Sonnet consume **1 request** per prompt; Opus consumes **3 requests**.
+This evaluation used **2 prompts per feature** (plan + implementation).
 
-At 2 prompts per feature with Sonnet, you get **150 features/month** within the included quota — far more than any hobby coder needs. Even with Opus for planning (3 requests) + Sonnet for implementation (1 request), that's 75 features/month.
+| Workflow | Requests per feature | Cost per feature |
+|----------|:--------------------:|:----------------:|
+| Sonnet plan + Sonnet impl | 2 | ~$0.07 |
+| Opus plan + Sonnet impl | 4 | ~$0.13 |
+| Haiku plan + Haiku impl | 2 | ~$0.07 |
+
+Additional requests beyond 300 are billed at **$0.04 each**.
 
 #### Break-even: Subscription vs. Requesty
 
-The best pay-per-use option is **GLM 4.7** at ~$0.77/feature. The cheapest viable option is **MiniMax M2.5** at ~$0.26/feature.
+The best pay-per-use option by quality is **GLM 4.7** at ~$2.71/feature.
+The cheapest viable option is **MiniMax M2.5** at ~$0.26/feature.
 
-| Comparison | Cost per feature | Features until $10 break-even |
-|------------|:----------------:|:-----------------------------:|
-| Copilot Pro (Sonnet) | $0.00* | Always cheaper if you do >0 features |
-| GLM 4.7 (Requesty) | ~$0.77 | **~13 features** |
-| MiniMax M2.5 (Requesty) | ~$0.26 | **~38 features** |
-| GLM plan + MiniMax impl | ~$0.49 | **~20 features** |
+The break-even point is the number of features at which the $10 subscription fee is recovered compared to Requesty.
+Below that number, pay-per-use is cheaper; above it, the subscription wins.
 
-\* Included in subscription. With 300 requests/month and 2 per feature, the marginal cost is $0 until you exceed the quota.
+| Comparison | Copilot Pro cost/feature | Requesty cost/feature | Break-even |
+|------------|:------------------------:|:---------------------:|:----------:|
+| Sonnet vs GLM 4.7 | ~$0.07 | ~$2.71 | **~4 features** |
+| Sonnet vs GLM plan + MiniMax impl | ~$0.07 | ~$0.49 | **~24 features** |
+| Sonnet vs MiniMax M2.5 | ~$0.07 | ~$0.26 | **~53 features** |
 
-**Bottom line**: If you implement more than ~13 features per month (or ~20 with the hybrid approach), a **Copilot Pro subscription is cheaper** than Requesty — and you get access to higher-quality models. For most hobby coders doing regular development, the subscription pays for itself quickly.
+**Bottom line**: If you implement more than ~4 features per month using GLM 4.7, a **Copilot Pro subscription is cheaper** — and delivers higher-quality results.
+For most hobby coders doing any regular development, that threshold is trivial to cross.
 
 #### When Pay-Per-Use Makes Sense
 
@@ -341,23 +363,9 @@ The best pay-per-use option is **GLM 4.7** at ~$0.77/feature. The cheapest viabl
 
 #### GitHub Copilot Pro+ ($39/month)
 
-Pro+ gives 1,500 premium requests/month and access to additional models. At 2 requests/feature, that's 750 features/month. **Only consider Pro+ if you heavily use Opus** (3 requests/prompt) or need the additional models — Pro is sufficient for Sonnet-based workflows.
-
----
-
-## Models That Failed Early
-
-Several models were tested but failed so severely that full evaluation was not meaningful:
-
-| Model | Type | Failure Reason |
-|-------|------|----------------|
-| [Qwen3 Coder 30B](https://lmstudio.ai/models/qwen/qwen3-coder-30b) | Local | Constant context compactions and crashes |
-| [Qwen3.5 27B 4bit](https://huggingface.co/mlx-community/Qwen3.5-27B-4bit) | Local | Stuck reading AGENTS.md (did not finish after 40 minutes) |
-| [Qwen3.5 9B](https://lmstudio.ai/models/qwen/qwen3.5-9b) | Local | Stuck reading AGENTS.md |
-| [LFM2 24B A2B](https://lmstudio.ai/models/liquid/lfm2-24b-a2b) | Local | Failed to call tools properly |
-| [GLM-4.6V-Flash 8Bit](https://lmstudio.ai/models/glm-4.6v-flash) | Local | Stuck in thinking |
-| Gemma 3 12B 4bit | Local | Constant tool call failures |
-| Gemini 3.1 Flash Lite | Requesty | Failed to call tools consistently |
+Pro+ costs $39/month and includes 1,500 premium requests (~$0.026/request).
+At 2 requests/feature with Sonnet, that covers up to 750 features/month.
+**Only consider Pro+ if you heavily use Opus** (3 requests/prompt) or need access to additional models — Pro is sufficient for Sonnet-based workflows.
 
 ---
 
@@ -376,15 +384,17 @@ For pay-per-use, **GLM 4.7** is the best cloud planner at ~$0.25 per plan (34/40
 
 Sonnet 4.6 produces the best implementation (34/40), self-corrects style issues, correctly uses `SensorService` for cross-feature validation, and completes in ~10 minutes. On a flat subscription this has no marginal cost.
 
-For pay-per-use implementation, **GLM 4.7** (~$0.52, 33/40) is the strongest alternative and the only other model to return full sensor details in the API response.
+For pay-per-use implementation, **GLM 4.7** (~$2.46, 33/40) is the strongest alternative and the only other model to return full sensor details in the API response.
 
 ### Recommended Setup
 
 **Subscription (GitHub Copilot Pro — $10/month):**
-Use **Opus 4.6** or **Sonnet 4.6** to produce the plan, review and adjust it, then use **Sonnet 4.6** to implement. Both models on the same flat subscription — no extra cost for the two-step workflow. You get 300 premium requests/month, enough for ~75-150 features depending on model choice.
+Use **Opus 4.6** or **Sonnet 4.6** to produce the plan, review and adjust it, then use **Sonnet 4.6** to implement. 
+You get 300 premium requests/month, enough for ~75-150 features depending on model choice.
 
 **Pay-per-use (Requesty):**
-Use **GLM 4.7** for planning (~$0.25) and implementation (~$0.52). Total cost per feature: ~$0.77. The quality gap vs. subscription models is modest.
+Use **GLM 4.7** for planning (~$0.25) and implementation (~$2.46). 
+Total cost per feature: ~$2.71. The quality is strong but the implementation cost is high — at this price, a Copilot Pro subscription pays for itself after just 4 features.
 
 **Best value hybrid:**
 Use **GLM 4.7** for planning (~$0.25 via Requesty) and **MiniMax M2.5** for implementation (~$0.24). Total ~$0.49 per feature — the lowest cost for a fully functional result.
@@ -394,12 +404,13 @@ Use **GLM 4.7** for planning (~$0.25 via Requesty) and **MiniMax M2.5** for impl
 No local model came close to matching cloud models. 
 Devstral Small 2 scored highest locally (13/40) but only produced the data layer — no service, controller, or DTOs. 
 Nemotron 3 Nano 30B (11/40) took 54 minutes and stopped without feedback. Gemma 3 12B failed entirely due to constant tool call failures. 
-**Local models on a Mac M4 Mini 32 GB are not viable for this kind of structured, multi-file Spring Boot feature development** — they lack the context handling, tool-calling reliability, and instruction-following needed for either planning or implementation.
+**Local models on a Mac M4 Mini 32 GB are insufficient for this kind of structured, multi-file Spring Boot feature development** — they lack the context handling, tool-calling reliability, and instruction-following needed to follow strict architectural conventions and multi-file testing patterns — even in a single-feature codebase. It is worth exploring whether smaller, well-scoped tasks or lighter context requirements would yield better results, but that is out of scope for this evaluation.
 
 ### Models to Avoid
 
 - **Qwen Turbo**: Cheapest cloud option but consistently failed at tool calling — not usable for either role.
-- **All local models**: Unreliable tool calling, wrong Java style, very slow.
+- **DeepSeek-V3.2**: Aborted mid-implementation yet still cost ~$0.57 — poor value for any result.
+- **Gemini 3.1 Flash Lite**: Failed completely; unable to call tools consistently.
 
 ---
 
