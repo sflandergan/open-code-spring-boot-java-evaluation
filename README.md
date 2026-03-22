@@ -325,7 +325,7 @@ The key question for hobby coders: **is a GitHub Copilot subscription worth it, 
 #### GitHub Copilot Pro ($10/month)
 
 GitHub Copilot Pro costs $10/month and includes **300 premium requests**.
-Each request costs $10 / 300 = **~$0.033**.
+Each request costs $10 / 300 = **\~$0.033**.
 Haiku and Sonnet consume **1 request** per prompt; Opus consumes **3 requests**.
 This evaluation used **2 prompts per feature** (plan + implementation).
 
