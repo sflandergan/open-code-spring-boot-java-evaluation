@@ -376,7 +376,8 @@ Rather than looking for a single best model, the more useful question is: **whic
 ### Planning: Claude Opus 4.6 or Claude Sonnet 4.6 (GitHub Copilot)
 
 Opus produces the best plans (36/40), with the strongest architectural reasoning, explicit cross-cutting concerns, and the most accurate codebase alignment. 
-Sonnet follows closely (35/40) with the cleanest API design and most complete configuration examples. Both are on a flat GitHub Copilot subscription, so there is no per-use cost to choose the stronger planner.
+Sonnet follows closely (35/40) with the cleanest API design and most complete configuration examples.
+With Opus consuming three times more credits, it is worth to stick with Sonnet for features with low or medium complexity.
 
 For pay-per-use, **GLM 4.7** is the best cloud planner at ~$0.25 per plan (34/40), with detailed Java code examples and a rich test plan.
 
