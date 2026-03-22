@@ -23,7 +23,7 @@ All scores are on a 1–10 scale.
 - **Package-protected repositories** — no access modifier on `JpaDeviceRepository`.
 - **Layering rule** — `DeviceService` must use `SensorService` (not `JpaSensorRepository`) to validate sensor existence.
 - **DTOs only in controller layer** — service methods accept/return entities, not DTOs.
-- **GDPR** — never log IDs.
+- **GDPR** — never log personal data or user identifiers (user IDs, emails, etc.); device and sensor IDs are technical identifiers and may be logged.
 - **Keyset pagination** preferred over offset.
 - **Test subclass pattern** (`ENTITY_TEST_DATA.md`) — use a test subclass or constructor, never reflection.
 - **AssertJ** assertions in all tests.
@@ -34,20 +34,19 @@ All scores are on a 1–10 scale.
 
 | Rank | Model | Completeness | Test Coverage | Compliance | Code Quality | **Total** |
 |------|-------|:------------:|:-------------:|:----------:|:------------:|:---------:|
-| 1 | Claude Sonnet 4.6 | 8 | 9 | 8 | 8 | **33** |
-| 2 | Claude Haiku 4.5 | 8 | 8 | 7 | 8 | **31** |
-| 3 | GLM 4.7 | 8 | 8 | 6 | 7 | **29** |
-| 4 | Claude Opus 4.6 *(UUID/no SensorService)* | 6 | 8 | 5 | 7 | **26** |
-| 5 | Kimi K2.5 | 7 | 5 | 7 | 6 | **25** |
-| 5 | MiniMax 2.5 | 7 | 6 | 6 | 6 | **25** |
-| 6 | Devstral *(sensors placeholder)* | 5 | 7 | 6 | 6 | **24** |
-| 7 | Devstral Small 2 (local) | 3 | 2 | 4 | 4 | **13** |
-| 8 | Nemotron 3 Nano (local) | 4 | 1 | 2 | 3 | **10** |
-| 9 | DeepSeek 3.2 | 2 | 1 | 2 | 3 | **8** |
-| 10 | GPT-OSS (local) | 1 | 1 | 1 | 2 | **5** |
+| 1 | Claude Sonnet 4.6 | 8 | 9 | 8 | 9 | **34** |
+| 2 | GLM 4.7 | 8 | 8 | 8 | 9 | **33** |
+| 3 | Claude Haiku 4.5 | 7 | 8 | 7 | 8 | **30** |
+| 4 | Claude Opus 4.6 | 6 | 8 | 6 | 8 | **28** |
+| 5 | Kimi K2.5 | 7 | 5 | 8 | 7 | **27** |
+| 6 | MiniMax 2.5 | 7 | 6 | 7 | 6 | **26** |
+| 7 | Devstral | 5 | 7 | 6 | 6 | **24** |
+| 8 | Devstral Small 2 (local) | 3 | 2 | 4 | 4 | **13** |
+| 9 | Nemotron 3 Nano (local) | 5 | 1 | 2 | 3 | **11** |
+| 10 | DeepSeek 3.2 | 2 | 1 | 2 | 3 | **8** |
 | 11 | Qwen Turbo | 1 | 1 | 1 | 1 | **4** |
 
-> **Note on Opus**: Full implementation but chose UUID device IDs (UUID is consistent end-to-end in its implementation) and used `DataIntegrityViolationException` as a proxy for `SensorNotFoundException` instead of calling `SensorService`, bypassing the layering rule.
+> **Note on Opus**: Full implementation but used `DataIntegrityViolationException` as a proxy for `SensorNotFoundException` instead of calling `SensorService`, bypassing the layering rule.
 >
 > **Note on Devstral**: Architecturally complete but `getDeviceSensors()` explicitly returns a hardcoded empty list with a placeholder comment — sensors are never returned from any device response.
 
@@ -57,8 +56,8 @@ All scores are on a 1–10 scale.
 
 ---
 
-### 1. Claude Sonnet 4.6 (`gh-sonnet-4.6/device-feature`)
-**Total: 33 / 40**
+### 1. Claude Sonnet 4.6
+**Total: 34 / 40**
 
 #### Completeness — 8/10
 
@@ -91,7 +90,7 @@ All scores are on a 1–10 scale.
 - `UpdateDeviceDto` passed to `DeviceService` — DTO in service layer violates AGENTS.md.
 - Migration filename `V202511141200__create_device_tables.sql` reuses the same timestamp as the existing `V202511141138__create_sensor_tables.sql` test migration (seconds differ but minute resolution is the same). Not a hard Flyway conflict but shows the timestamp was not genuinely generated.
 
-#### Code Quality — 8/10
+#### Code Quality — 9/10
 
 **Strengths:**
 - Clean, readable method names matching AGENTS.md style.
@@ -100,23 +99,23 @@ All scores are on a 1–10 scale.
 - Proper imports (no FQN inline).
 - Efficient: uses `existsByIdDeviceIdAndIdSensorId` before saving — no unnecessary read-back.
 
-**Issues (-2):**
-- GDPR: `logger.info("Created device with id: {}, name: {}", ...)` — logs the device ID.
+**Issues (-1):**
 - `UpdateDeviceDto.applyToEntity()` is called inside the service, meaning the DTO logic subtly bleeds past the controller boundary.
 
 ---
 
-### 2. Claude Haiku 4.5 (`gh-haiku-4.5/device-feature`)
-**Total: 31 / 40**
+### 2. Claude Haiku 4.5
+**Total: 30 / 40**
 
-#### Completeness — 8/10
+#### Completeness — 7/10
 
 **Present:** Migration, Entity (UUID, `@GeneratedValue(UUID)`, `@PrePersist`/`@PreUpdate`, `Instant`), Repository, Service, DTOs (Create, Update, Device, `SensorSummaryDto`), Controller (CRUD + assign + get), Exception Handler, Configuration, AGENTS.md update.
 
-**Issues (-2):**
+**Issues (-3):**
 - No `GET /api/devices` list endpoint.
-- `SensorNotFoundException` is not handled in `DeviceExceptionHandler` — if a sensor is not found during `assignSensor`, the generic 500 handler catches it. (You noted this as a manually found issue.)
+- `SensorNotFoundException` is not handled in `DeviceExceptionHandler` — if a sensor is not found during `assignSensor`, the generic 500 handler catches it.
 - `CreateDeviceDto` and `UpdateDeviceDto` are passed into `DeviceService` — DTOs in service layer.
+- **Sensor data never returned**: despite having `SensorSummaryDto` and `@OneToMany` on `Device`, the controller's `toDto(device)` calls `new DeviceDto(device)` which uses the no-sensors constructor — every device response returns an empty sensor list regardless of assignments.
 
 #### Test Coverage — 8/10
 
@@ -139,7 +138,7 @@ All scores are on a 1–10 scale.
 
 **Issues (-3):**
 - DTOs passed to service layer (`createDevice(CreateDeviceDto dto)`, `updateDevice(UUID id, UpdateDeviceDto dto)`).
-- Does not use `SensorService` to validate sensor existence — `assignSensor` only checks `deviceSensorRepository`, no cross-feature sensor validation. The sensor FK constraint is relied on to catch invalid sensor IDs.
+- Does not use `SensorService` to validate sensor existence — `assignSensor` only checks `deviceSensorRepository`, no cross-feature sensor validation.
 - Missing `SensorNotFoundException` in exception handler.
 
 #### Code Quality — 8/10
@@ -151,13 +150,13 @@ All scores are on a 1–10 scale.
 - No FQN inline imports.
 
 **Issues (-2):**
-- GDPR: `logger.info("Created device with id: {}, name: {}", ...)` — logs the device ID.
-- Migration filename `V202511141200__create_device_tables.sql` uses a past timestamp (same minute-resolution as if copied from sensor migration timestamp).
+- Migration filename `V202511141200__create_device_tables.sql` uses a past timestamp.
+- Sensor data never surfaced in API response — `@OneToMany` relationship and `SensorSummaryDto` were defined but the controller ignores them, making the sensor assignment feature partially invisible to API consumers.
 
 ---
 
-### 3. GLM 4.7 (`rq-glm-4.7/devices-features`)
-**Total: 29 / 40**
+### 3. GLM 4.7
+**Total: 33 / 40**
 
 #### Completeness — 8/10
 
@@ -175,7 +174,7 @@ All scores are on a 1–10 scale.
 - RepositoryITs failing — the missing `@GeneratedValue` causes null UUIDs on persist, breaking constraint checks in tests.
 - Flyway wrongly-named schema migration (reported from your findings) prevents ITs from running.
 
-#### Compliance — 6/10
+#### Compliance — 8/10
 
 **Strengths:**
 - `@Configuration` bean wiring.
@@ -186,29 +185,28 @@ All scores are on a 1–10 scale.
 - `ProblemDetail` responses.
 - AGENTS.md updated.
 
-**Issues (-4):**
-- GDPR: Multiple `logger.info("Created device with id: {}", ...)` and `logger.debug("Retrieving device with id: {}", id)` — logs device IDs.
+**Issues (-2):**
 - DTOs (`UpdateDeviceDto`) passed into `DeviceService.updateDevice()` — DTO in service layer.
 - No keyset pagination implemented in list endpoint.
-- Flyway wrong schema name (reported as causing IT failure).
 
-#### Code Quality — 7/10
+#### Code Quality — 9/10
 
 **Strengths:**
 - Clean, readable code overall.
 - `TIMESTAMPTZ` in migration.
 - `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
 - Good method decomposition.
+- **Best relationship mapping**: `DeviceSensor` has a `@ManyToOne` back to `Sensor`, and the controller's `toDto()` walks `device.getSensors()` to build a full `SensorDto` list from the JPA graph — the richest sensor response of any implementation.
 
-**Issues (-3):**
+**Issues (-1):**
 - Missing `@GeneratedValue` on entity `@Id` — critical for correct JPA behaviour.
-- GDPR logging violations.
-- `SensorDto` from the `sensors` package imported and reused in `DeviceController` — creates coupling to the `sensors` package's DTO directly in the `devices` controller. Should use a dedicated device-level sensor representation.
+
+> **Note on Flyway schema name**: GLM's Flyway configuration references a wrong schema name, causing ITs to fail. This is counted once in Test Coverage (as the tests do not pass) but not as an additional Code Quality deduction.
 
 ---
 
-### 4. Kimi K2.5 (`rq-kimi-k2.5/devices-feature`)
-**Total: 25 / 40**
+### 4. Kimi K2.5
+**Total: 27 / 40**
 
 #### Completeness — 7/10
 
@@ -224,17 +222,10 @@ All scores are on a 1–10 scale.
 **Present:** `JpaDeviceRepositoryIT`, `JpaDeviceSensorRepositoryIT`, `DeviceServiceTest`, `DeviceControllerTest`. Uses `RepositoryIT`.
 
 **Issues (-5):**
-- No JSON model tests for any of the three DTOs.
-- RepositoryITs are reported as failing — messed-up transaction and static test data handling in ITs.
-- `JpaDeviceSensorRepositoryIT` missing (from the file list — only `JpaDeviceRepositoryIT` confirmed).
-
-Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRepositoryIT` are present. Revising the IT test issue to focus on the transaction failures.
-
-**Issues (-5):**
-- No JSON model tests for DTOs.
+- No JSON model tests for DTOs (`CreateDeviceDtoTest`, `DeviceDtoTest`, `UpdateDeviceDtoTest` are absent).
 - RepositoryITs failing due to transaction/static data handling issues.
 
-#### Compliance — 7/10
+#### Compliance — 8/10
 
 **Strengths:**
 - `@Configuration` bean wiring.
@@ -244,28 +235,26 @@ Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRe
 - AGENTS.md updated.
 - `ProblemDetail` responses.
 
-**Issues (-3):**
+**Issues (-2):**
 - `UpdateDeviceDto` passed to service layer.
-- GDPR: logs device IDs in service (`logger.info("Created device with id: {}", ...)`, `logger.info("Assigned sensor {} to device {}", ...)`).
 - No keyset pagination in list operations.
 
-#### Code Quality — 6/10
+#### Code Quality — 7/10
 
 **Strengths:**
 - `TIMESTAMPTZ` in migration — correct.
 - `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
 - `@GeneratedValue(IDENTITY)` used — correct for `BIGSERIAL` with `Long` ID.
 
-**Issues (-4):**
+**Issues (-3):**
 - Uses `Long` for device ID (while all other models use UUID) — inconsistent with the feature design; the migration uses `BIGSERIAL` for device ID which conflicts with the many-to-many FK to a UUID-based sensor table.
 - `getDeviceSensorIds()` uses `deviceSensorRepository.findAll().stream().filter()` — loads the **entire** device_sensors table into memory and filters in Java. This is a critical performance issue.
-- GDPR logging violations.
 - Inconsistent sensor loading: some service methods load sensors via stream filter, others have no loading at all.
 
 ---
 
-### 5. MiniMax 2.5 (`rq-minimax-2.5/devices-feature`)
-**Total: 25 / 40**
+### 5. MiniMax 2.5
+**Total: 26 / 40**
 
 #### Completeness — 7/10
 
@@ -285,7 +274,7 @@ Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRe
 - Missing `@GeneratedValue` will cause all ITs to fail on save (null UUID).
 - Sensor mapping not loaded when returning device — `toDto()` only shows device fields, not assigned sensors, because `getDeviceSensors` is not called on the response path.
 
-#### Compliance — 6/10
+#### Compliance — 7/10
 
 **Strengths:**
 - `@Configuration` bean wiring.
@@ -295,9 +284,8 @@ Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRe
 - AGENTS.md updated.
 - `ProblemDetail` responses.
 
-**Issues (-4):**
+**Issues (-3):**
 - `CreateDeviceDto` passed into `DeviceService.createDevice()` and `UpdateDeviceDto` passed into `updateDevice()` — DTOs in service layer.
-- GDPR: logs device ID in service.
 - No keyset pagination.
 - Missing `@GeneratedValue`.
 
@@ -310,23 +298,23 @@ Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRe
 **Issues (-4):**
 - Missing `@GeneratedValue` — critical.
 - Unnecessary read-back in `assignSensor`: after saving the assignment, performs `deviceRepository.findById(deviceId).orElseThrow()` to return a fresh device object — the device was already loaded at the top of the method and not mutated.
-- GDPR logging violations.
 - Inconsistent indentation (4 spaces vs tabs mixed with the rest of the codebase).
+- `DeviceDto.fromEntity()` maps `deviceSensors` to `SensorDto` but sets `name`, `type`, and `capabilities` all to `null` — the sensor data is structurally present in the JSON but entirely empty, making the sensor assignment feature misleading to API consumers.
 
 ---
 
-### Claude Opus 4.6 (`gh-opus-4.6/devices-feature`)
-**Total: 26 / 40** *(ranked separately — see note)*
+### 6. Claude Opus 4.6
+**Total: 28 / 40**
 
 #### Completeness — 6/10
 
 **Present:** Migration, Entity, Repository, Service, DTOs (Create, Update, Device with nested `AssignedSensorDto`), Controller (CRUD + assign + get), Exception Handler, Configuration, AGENTS.md update.
 
 **Issues (-4):**
-- Uses **UUID** for device ID with `@GeneratedValue(strategy = GenerationType.UUID)` — while this works independently, the codebase uses `BIGSERIAL`/`Long` for sensors and the plan evaluation noted this as a key codebase fit issue. In the implementation, this design choice is at least consistent end-to-end.
 - No `GET /api/devices` list endpoint.
 - No keyset pagination.
-- `getDevice()` and `assignSensor()` make **two separate service calls** in the controller for device + sensors — this is correct but results in two DB round-trips for what could be one.
+- `getDevice()` and `assignSensor()` make **two separate service calls** in the controller for device + sensors — results in two DB round-trips for what could be one.
+- Sensor response only contains `AssignedSensorDto(sensorId, assignedAt)` — no sensor name, type, or capabilities returned. API consumers cannot identify a sensor from the device response without a separate lookup.
 
 #### Test Coverage — 8/10
 
@@ -336,7 +324,7 @@ Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRe
 - `DeviceServiceTest` does not test the `getDeviceSensors` path thoroughly.
 - `JpaDeviceRepositoryIT` only tests basic CRUD — no pagination or `existsByName` queries tested.
 
-#### Compliance — 5/10
+#### Compliance — 6/10
 
 **Strengths:**
 - `@Configuration` bean wiring.
@@ -346,14 +334,13 @@ Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRe
 - `ProblemDetail` responses.
 - AGENTS.md updated.
 
-**Issues (-5):**
+**Issues (-4):**
 - Does **not** use `SensorService` to validate sensor existence — instead catches `DataIntegrityViolationException` from the FK constraint violation. This is an unconventional approach that bypasses the layering rule and couples service behaviour to DB exception types.
 - `UpdateDeviceDto` passed into `DeviceService.updateDevice()` — DTO in service layer.
-- GDPR: logs device ID in exception message (`DeviceNotFoundException` contains the ID, logged via `ex.getMessage()`).
 - No keyset pagination.
 - No list endpoint.
 
-#### Code Quality — 7/10
+#### Code Quality — 8/10
 
 **Strengths:**
 - Clean code structure, good method decomposition.
@@ -362,15 +349,14 @@ Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRe
 - Proper imports — no FQN inline.
 - `SensorNotFoundException` correctly handled in exception handler.
 
-**Issues (-3):**
+**Issues (-2):**
 - `DataIntegrityViolationException` used as a proxy for sensor-not-found — fragile coupling to DB constraint behaviour.
-- GDPR violation in exception handler logging (`ex.getMessage()` which contains the ID).
 - Migration file timestamp (`V202603151000`) appears to be today's date — which is fine operationally but confirms the model generated a future/arbitrary date rather than a real one.
 
 ---
 
-### Devstral (`rq-devstral/devices-feature`)
-**Total: 24 / 40** *(listed separately — sensor loading is a placeholder)*
+### 7. Devstral
+**Total: 24 / 40**
 
 #### Completeness — 5/10
 
@@ -407,7 +393,6 @@ Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRe
 - `TIMESTAMP` not `TIMESTAMPTZ` in migration.
 - Missing named FK/PK constraints in migration SQL (bare `FOREIGN KEY` syntax).
 - DTOs (`CreateDeviceDto`, `UpdateDeviceDto`) passed into service layer.
-- GDPR: logs device and sensor IDs.
 
 #### Code Quality — 6/10
 
@@ -420,12 +405,11 @@ Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRe
 - `getDeviceSensors()` returns empty list — fundamentally broken sensor retrieval.
 - Missing `@GeneratedValue`.
 - Missing `@Valid` on controller inputs.
-- GDPR logging violations.
 - Missing named constraints in migration.
 
 ---
 
-### 7. Devstral Small 2 (`devstral-small-2/device-feature`)
+### 8. Devstral Small 2
 **Total: 13 / 40**
 
 #### Completeness — 3/10
@@ -481,14 +465,14 @@ Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRe
 
 ---
 
-### 8. Nemotron 3 Nano (`nemotron-3-nano/devices-feature`)
-**Total: 10 / 40**
+### 9. Nemotron 3 Nano
+**Total: 11 / 40**
 
-#### Completeness — 4/10
+#### Completeness — 5/10
 
 **Present:** Migration (two files — one wrongly named), Entity, Repository, Service, Controller, DTOs (Create, Update, Device), `GlobalExceptionHandler` (in wrong package), `JpaDeviceSensorRepository`.
 
-**Issues (-6):**
+**Issues (-5):**
 - No `DeviceConfiguration` — `@Service` annotation used instead, violating AGENTS.md.
 - Two duplicate Flyway migration files: `V20260301_01_create_device_tables.sql` (wrong format) and `V202603012013__create_device_tables.sql` (correct format but both present) — Flyway will fail on the wrongly named file.
 - No AGENTS.md update.
@@ -527,7 +511,7 @@ Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRe
 
 ---
 
-### 9. DeepSeek 3.2 (`rq-deepseek-3.2/devices-feature`)
+### 10. DeepSeek 3.2
 **Total: 8 / 40**
 
 #### Completeness — 2/10
@@ -573,43 +557,72 @@ Wait — from the file list: both `JpaDeviceRepositoryIT` and `JpaDeviceSensorRe
 
 ---
 
-### 10. GPT-OSS (`gpt-oss/devices-feature`)
-**Total: 5 / 40**
-
-#### Completeness — 1/10
-
-**Issues (-9):**
-- Branch contains only a `docs/devices-feature.md` plan file. No source code at all.
-- You noted "5 partially implemented classes" — this may refer to code in the plan document rather than actual Java files. Git diff confirms no `src/` changes.
-
-#### Test Coverage — 1/10
-No code, no tests.
-
-#### Compliance — 1/10
-No code to evaluate.
-
-#### Code Quality — 2/10
-The plan document exists but no implementation was produced.
-
----
-
-### 11. Qwen Turbo (`rq-qwen-turbo/devices-feature`)
+### 11. Qwen Turbo
 **Total: 4 / 40**
 
+The model produced two structurally distinct, mutually incompatible attempts within the same branch, neither of which is placed in a valid Maven source tree.
+
 #### Completeness — 1/10
 
+**What was generated (in wrong locations):**
+
+The model generated code across three separate directory roots, none of which correspond to a valid Maven project layout:
+
+1. **`de/sfl/devices/` (root-level)** — A minimal CRUD-only implementation with no sensor-assignment capability: `Device.java` (entity), `DeviceDto.java`, `DeviceRepository.java`, `DeviceController.java`, `DeviceService.java`, three exception classes, `DevicesApplicationTests.java`. This set is missing a `DeviceConfiguration` and no migration file was written for this version.
+
+2. **`src/main/java/de/sfl/devices/` (correct Maven root, wrong package depth)** — A second, entirely different implementation: `Device.java` (different model with `serialNumber`, `model` fields instead of `name`/`type`/`capabilities`), `DeviceSensor.java`, and a second `@SpringBootApplication` class `DevicesApplication.java`. This duplicate main class breaks the Spring Boot build — the project already has `OpenCodeSpringApplication` as its entry point, and having two `@SpringBootApplication` classes in the same scan path causes an ambiguous startup error.
+
+3. **`de/sfl/sensors/` (root-level)** — A partial reimplementation of the existing sensors feature: `SensorService.java` (interface), `SensorServiceImpl.java`, `SensorRepository.java`, `SensorConfig.java`, `Sensor.java`. These duplicate (and conflict with) the existing `de.sfl.sensors` package already in the project.
+
+The migration file (`V202511140900__create_devices_table.sql`) is placed correctly under `src/main/resources/db/migration/` but uses `TIMESTAMP` instead of `TIMESTAMPTZ` and embeds two `CREATE TABLE` statements in a single file — the second statement (`device_sensor_relationships`) is pasted inline rather than in a separate migration.
+
 **Issues (-9):**
-- Branch has no changes to `src/` at all — no Java files, no migration.
-- You noted "Wrote source code partially to root instead of src / Added second main application breaking build" — confirming the implementation is structurally broken and no valid code reached the feature branch.
+- No code is in a valid Maven source root. The primary output (`de/sfl/...`) was written to the repository root, not `src/main/java/` or `src/test/java/`.
+- No sensor-assignment feature: neither implementation contains an assign-sensor endpoint, a `DeviceSensor` join entity in the correct package, or a `JpaDeviceSensorRepository`.
+- No `DeviceConfiguration` — `@Autowired` field injection and `@Service`/`@Repository` annotations used throughout.
+- A second `@SpringBootApplication` class (`DevicesApplication`) introduced into the live source tree breaks the build.
+- The sensors feature was partially reimplemented from scratch, duplicating and conflicting with existing production code.
+- No `GET /api/devices` list endpoint in the primary implementation (the `src/main/java` version has a different, incompatible domain model).
+- No AGENTS.md update.
 
 #### Test Coverage — 1/10
-No code, no tests.
+
+Three test files were generated, all non-functional:
+
+- `DevicesApplicationTests.java` — a context-load smoke test placed in package `de.sfl.devices` (wrong package for the main application).
+- `DeviceIntegrationTest.java` (in a `integration-test` sub-package) — asserts that a GET to `/api/devices/1` contains the literal string `"expectedContent"`, which is a placeholder and will never pass.
+- `DeviceServiceTest.java` — attempts to mock `DeviceRepository` via `@MockBean` but the class references unresolved symbols (`DeviceRepository`, `Device`) with incorrect package paths; the method body calls `when(deviceRepository.findById(1L)).thenReturn(new Device())` but `thenReturn` expects an `Optional`, not a bare entity.
+
+No JSON model tests, no repository integration tests extending `RepositoryIT`, no meaningful assertions. None of the test files would compile or pass.
 
 #### Compliance — 1/10
-No code to evaluate.
+
+**Issues (-9):**
+- `@Autowired` field injection used in both `DeviceService` and `DeviceController` — violates the constructor injection requirement.
+- `@Service` on `DeviceService` and `@Repository` on `DeviceRepository` — direct AGENTS.md violations; no `@Configuration` class exists.
+- `DeviceRepository` is a public interface — not package-protected.
+- `@RestControllerAdvice` on `DeviceExceptionHandler` is not scoped to `DeviceController.class`.
+- Error responses return `ResponseEntity<String>` with plain text — not `ProblemDetail` (RFC 7807).
+- No cross-feature sensor validation; the sensor-assignment feature is entirely absent.
+- The exception classes carry `@ResponseStatus` annotations alongside the `@RestControllerAdvice` handler — redundant and inconsistent.
+- Excessive Javadoc on exception classes and the exception handler — contradicts the "sparingly" rule.
+- AGENTS.md not updated.
+- `DeviceTestData.java` is placed in a package named `de.sfl.devices.test-data` — a hyphen is not a valid Java package name segment; this file would not compile.
 
 #### Code Quality — 1/10
-No code to evaluate.
+
+**Issues (-9):**
+- The two implementations use incompatible domain models: the `src/de/...` version uses `name`/`type`/`capabilities` (matching the sensor entity); the `src/main/java/...` version uses `serialNumber`/`model` — both exist in the branch simultaneously.
+- `javax.persistence.*` imports used in the `src/de/...` entity — the project uses Jakarta EE (`jakarta.persistence.*`), not the legacy `javax` namespace. This would cause a compilation failure on Java 17+/Spring Boot 3.x.
+- `LocalDateTime` used for timestamps — the codebase standard is `Instant` with `TIMESTAMPTZ` in the DB.
+- `TIMESTAMP` (not `TIMESTAMPTZ`) in the migration.
+- Two `CREATE TABLE` statements in a single migration file; the second table (`device_sensor_relationships`) is not a valid devices-feature migration — it references `sensors(id)` with no `BIGINT` type alignment guard and uses bare `FOREIGN KEY` syntax without named constraints.
+- Migration timestamp `V202511140900` collides with the existing sensor migration (`V202511141138`) namespace, and the timestamp is not a genuine generation time.
+- `getAllDevices()` in `DeviceService` uses `deviceRepository.findAll().stream().map(...)` — no pagination.
+- `updateDevice()` returns `null` on not-found rather than throwing a typed exception — the exception classes defined (`DeviceNotFoundException`) are never used in the service or controller.
+- `DeviceTestData.createDevice()` calls a three-argument constructor `new Device("Test Device", "TypeA", "1234567890")` but the `Device` entity has no such constructor.
+- The `src/main/java/de/sfl/devices/Device.java` model calls `sensors.add(sensor)` in `addSensor()` without null-checking the `sensors` set, which will throw `NullPointerException` at runtime since `sensors` is never initialised.
+- Verbose `toString()`, `equals()`, `hashCode()` generated manually on the entity — inconsistent with the codebase style using records or omitting these methods.
 
 ---
 
@@ -630,7 +643,6 @@ No code to evaluate.
 | Issue | Implementations Affected |
 |-------|--------------------------|
 | DTOs passed to service layer | Sonnet, Haiku, GLM, Kimi, MiniMax, Devstral, Opus |
-| GDPR: logging device/sensor IDs | Sonnet, Haiku, GLM, Kimi, MiniMax, Devstral |
 | No `GET /api/devices` list endpoint | Sonnet, Haiku, Kimi, MiniMax, Opus, Devstral |
 | Missing `@GeneratedValue` on UUID entity | GLM, MiniMax, Devstral |
 | `TIMESTAMP` instead of `TIMESTAMPTZ` | Devstral, Devstral-Small |
@@ -641,16 +653,31 @@ No code to evaluate.
 | No JSON model DTO tests | Kimi |
 | `@Service`/Lombok | Nemotron |
 
+### Sensor Response Quality
+
+A key differentiator across implementations is whether assigned sensor data is meaningfully surfaced in the API response. There is a clear spectrum:
+
+| Quality | Model | Sensor data returned |
+|---------|-------|----------------------|
+| Full sensor details | Sonnet, GLM | Full `SensorDto` (id, name, type, capabilities) via `SensorService` or JPA graph traversal |
+| Partial data | Opus | `AssignedSensorDto(sensorId, assignedAt)` — identifies which sensor but no details |
+| Broken / empty | Haiku | `@OneToMany` defined but `toDto()` ignores it — always returns empty list |
+| Broken / empty | MiniMax | Sensor IDs mapped but name/type/capabilities all null |
+| Broken / placeholder | Devstral | `List.of()` hardcoded in service with an explicit TODO comment |
+| IDs only | Kimi | `List<Long> sensorIds` — no sensor details |
+
+**Sonnet** resolves sensors through `SensorService`, which is the architecturally correct approach (respects the cross-feature service boundary). **GLM** uses JPA relationship traversal (`@ManyToOne` on `DeviceSensor` → `Sensor`), which is also a valid approach and produces the richest graph in a single DB query. Both are valid; Sonnet's approach is more aligned with the AGENTS.md layering rules since it goes through the service boundary.
+
 ### Key Differentiators
 
-- **Sonnet** is the most complete working implementation. Its main weaknesses are the DTO-in-service pattern (present in nearly all models) and the GDPR logging violation. It is the only model that correctly used `SensorService` for cross-feature sensor validation.
-- **Haiku** is close behind Sonnet and demonstrates that the model learned from the plan's mistakes (no Lombok, UUID IDs). Its main gap is the missing `SensorNotFoundException` handler and the DTO-in-service pattern.
-- **GLM** has excellent test coverage breadth but the missing `@GeneratedValue` is a showstopper bug that will break all repository ITs. The GDPR logging is the most extensive across all models.
-- **Opus** is architecturally unusual — it chose a `DataIntegrityViolationException` catch as a proxy for sensor validation, which is fragile and bypasses the layering rule. Despite being a top-tier plan producer, the implementation reflects less codebase alignment than Sonnet or Haiku.
+- **Sonnet** is the most complete working implementation. Its main weakness is the DTO-in-service pattern (present in nearly all models). It is the only model that correctly used `SensorService` for cross-feature sensor validation.
+- **GLM** rose to #2 on the strength of its relationship mapping (full JPA graph, richest sensor response) and broad test coverage. Its showstopper bugs (missing `@GeneratedValue`, Flyway schema misconfiguration) prevent the tests from passing, but the code structure and design quality are high.
+- **Haiku** fell to #3 due to a subtle but critical bug: despite defining `SensorSummaryDto` and a full `@OneToMany` relationship, the controller always calls the no-sensors constructor — the feature is architecturally present but functionally broken for API consumers.
+- **Opus** is architecturally unusual — it chose a `DataIntegrityViolationException` catch as a proxy for sensor validation, which is fragile and bypasses the layering rule. Despite being a top-tier plan producer, the implementation reflects less codebase alignment than Sonnet or GLM.
 - **Kimi** suffers from a critical performance bug (`findAll().stream().filter()`) and missing DTO tests, but the core structure is otherwise sound.
-- **MiniMax** has the unnecessary-read-back bug in `assignSensor` and missing `@GeneratedValue`, but otherwise follows patterns correctly.
+- **MiniMax** has the unnecessary-read-back bug in `assignSensor`, missing `@GeneratedValue`, and a misleading sensor response that includes structurally correct but data-empty sensor objects.
 - **Devstral (cloud)** produced working code structure but with the sensor retrieval left as a placeholder — a fundamental functional gap acknowledged in the code itself.
-- **Local models (Devstral-Small, Nemotron, GPT-OSS)** all failed to produce complete implementations. Devstral-Small produced a reasonable data layer; Nemotron produced a structurally broken implementation with wrong types; GPT-OSS and Qwen produced no working code.
+- **Local models (Devstral-Small, Nemotron, Qwen)** all failed to produce complete implementations. Devstral-Small produced a reasonable data layer; Nemotron produced a structurally broken implementation with wrong types; Qwen produced two incompatible partial implementations in invalid directory locations — neither compiled, both violated foundational AGENTS.md rules, and the model partially reimplemented the existing sensors feature from scratch using the wrong Jakarta namespace.
 
 ### Migration Filename Compliance
 
