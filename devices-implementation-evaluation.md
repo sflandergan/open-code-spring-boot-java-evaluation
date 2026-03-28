@@ -34,32 +34,35 @@ All scores are on a 1–10 scale.
 
 | Rank | Model | Completeness | Test Coverage | Compliance | Code Quality | **Total** |
 |------|-------|:------------:|:-------------:|:----------:|:------------:|:---------:|
-| 1 | GPT 5.4 | 10 | 9 | 9 | 9 | **37** |
+| 1 | GPT 5.4 (GitHub Copilot) | 10 | 9 | 9 | 9 | **37** |
 | 2 | Claude Sonnet 4.6 | 9 | 9 | 8 | 9 | **35** |
 | 2 | GLM 4.7 | 9 | 8 | 9 | 9 | **35** |
-| 4 | GPT 5.3 Codex Extra-High | 10 | 9 | 6 | 9 | **34** |
-| 4 | GPT 5.3 Codex | 9 | 9 | 8 | 8 | **34** |
-| 4 | GPT 5.3 Codex High | 9 | 9 | 8 | 8 | **34** |
-| 7 | GPT 5.3 Codex Low | 9 | 7 | 9 | 8 | **33** |
-| 8 | Claude Opus 4.6 | 8 | 8 | 8 | 8 | **32** |
-| 9 | Claude Haiku 4.5 | 8 | 8 | 7 | 8 | **31** |
-| 10 | Kimi K2.5 | 8 | 5 | 9 | 7 | **29** |
-| 11 | MiniMax 2.5 | 8 | 6 | 8 | 6 | **28** |
-| 12 | Devstral | 6 | 7 | 6 | 6 | **25** |
-| 13 | Devstral Small 2 (local) | 3 | 2 | 4 | 4 | **13** |
-| 14 | Nemotron 3 Nano (local) | 6 | 1 | 2 | 3 | **12** |
-| 15 | DeepSeek 3.2 | 2 | 1 | 2 | 3 | **8** |
-| 16 | Qwen Turbo | 1 | 1 | 1 | 1 | **4** |
+| 2 | GPT 5.4 (ChatGPT) | 9 | 10 | 8 | 8 | **35** |
+| 5 | GPT 5.3 Codex Extra-High | 10 | 9 | 6 | 9 | **34** |
+| 5 | GPT 5.3 Codex | 9 | 9 | 8 | 8 | **34** |
+| 5 | GPT 5.3 Codex High | 9 | 9 | 8 | 8 | **34** |
+| 8 | GPT 5.3 Codex Low | 9 | 7 | 9 | 8 | **33** |
+| 9 | Claude Opus 4.6 | 8 | 8 | 8 | 8 | **32** |
+| 10 | Claude Haiku 4.5 | 8 | 8 | 7 | 8 | **31** |
+| 11 | Kimi K2.5 | 8 | 5 | 9 | 7 | **29** |
+| 12 | MiniMax 2.5 | 8 | 6 | 8 | 6 | **28** |
+| 13 | Devstral | 6 | 7 | 6 | 6 | **25** |
+| 14 | Devstral Small 2 (local) | 3 | 2 | 4 | 4 | **13** |
+| 15 | Nemotron 3 Nano (local) | 6 | 1 | 2 | 3 | **12** |
+| 16 | DeepSeek 3.2 | 2 | 1 | 2 | 3 | **8** |
+| 17 | Qwen Turbo | 1 | 1 | 1 | 1 | **4** |
 
 > **Note on Opus**: Full implementation but used `DataIntegrityViolationException` as a proxy for `SensorNotFoundException` instead of calling `SensorService`, bypassing the layering rule.
 >
 > **Note on Devstral**: Architecturally complete but `getDeviceSensors()` explicitly returns a hardcoded empty list with a placeholder comment — sensors are never returned from any device response.
 >
-> **Note on GPT 5.4**: Used `EntityManager.find(Sensor.class, sensorId)` for cross-feature sensor validation — bypasses `SensorService` but does not access `JpaSensorRepository` directly.
+> **Note on GPT 5.4 (GitHub Copilot)**: Used `EntityManager.find(Sensor.class, sensorId)` for cross-feature sensor validation — bypasses `SensorService` but does not access `JpaSensorRepository` directly.
+>
+> **Note on GPT 5.4 (ChatGPT)**: Same `EntityManager.find` approach as the GPT 5.4 (Copilot) run. Additionally passes `UpdateDeviceDto` into the service layer and is missing `@GeneratedValue` on `Device.id` (compensated by a null-guard in `@PrePersist`). Adds a `SensorDtoTest` that the GPT 5.4 (Copilot) run lacked.
 >
 > **Note on GPT 5.3 Codex Extra-High**: Created `JpaSensorLookupRepository` (a Spring Data repo for `Sensor` entity) in the `devices` package — a clear layering violation creating infrastructure to access another feature's entity.
 >
-> **Note on GPT 5.3 Codex models**: None of the five GPT models use `SensorService` for cross-feature sensor validation. Each model chose a different bypass strategy: `EntityManager.find`, JPQL query, native SQL, or a custom repository.
+> **Note on GPT 5.3 Codex models**: None of the five GPT 5.3 Codex models use `SensorService` for cross-feature sensor validation. Each model chose a different bypass strategy: `EntityManager.find`, JPQL query, native SQL, or a custom repository.
 
 ---
 
@@ -623,7 +626,7 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 
 ---
 
-### 12. GPT 5.4
+### 12. GPT 5.4 (GitHub Copilot)
 **Total: 37 / 40**
 
 #### Completeness — 10/10
@@ -635,7 +638,7 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 **Present:** `CreateDeviceDtoTest`, `DeviceDtoTest`, `UpdateDeviceDtoTest` (JSON model tests), `JpaDeviceRepositoryIT`, `JpaDeviceSensorRepositoryIT`, `DeviceServiceTest`, `DeviceControllerTest`. Uses `RepositoryIT` base class. AssertJ throughout. Test subclass pattern for entity ID assignment.
 
 **Issues (-1):**
-- Minor: EntityManager-based sensor lookup path could benefit from more targeted test scenarios.
+- No `SensorDtoTest` — the local `SensorDto` record (used inside `DeviceDto`) has no JSON marshalling test.
 
 #### Compliance — 9/10
 
@@ -668,7 +671,57 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 
 ---
 
-### 13. GPT 5.3 Codex Extra-High
+### 13. GPT 5.4 (ChatGPT)
+**Total: 35 / 40**
+
+#### Completeness — 9/10
+
+**Present:** Migration (named constraints, `TIMESTAMPTZ`), Entity (`@MapsId`, `@ManyToOne` back to `Sensor`), Repository (package-protected), Service, DTOs (Create, Update, Device with full local `SensorDto` list), Controller (CRUD + assign + get), Exception Handler (scoped, `ProblemDetail`), Configuration, AGENTS.md update. `findDetailedById` with `JOIN FETCH` for eager sensor loading.
+
+**Issues (-1):**
+- `updateDevice(UUID id, UpdateDeviceDto dto)` passes a DTO into the service layer — violates the AGENTS.md rule that services work with entities only.
+
+#### Test Coverage — 10/10
+
+**Present:** `CreateDeviceDtoTest`, `DeviceDtoTest`, `UpdateDeviceDtoTest`, `SensorDtoTest` (JSON model tests — including the nested `SensorDto`, which the GPT 5.4 (Copilot) run missed), `JpaDeviceRepositoryIT`, `JpaDeviceSensorRepositoryIT`, `DeviceServiceTest`, `DeviceControllerTest`. Uses `RepositoryIT` base class. AssertJ throughout. Test subclass pattern for entity ID assignment. Good scenario coverage across all paths.
+
+#### Compliance — 8/10
+
+**Strengths:**
+- `@Configuration` bean wiring — no `@Service`/`@Component`.
+- Package-protected repositories.
+- No unnecessary interface.
+- `@RestControllerAdvice(assignableTypes = DeviceController.class)` — scoped advice.
+- `ProblemDetail` (RFC 7807) responses.
+- AGENTS.md updated.
+- Test subclass pattern.
+- Local `SensorDto` in `devices` package avoids importing across feature packages.
+
+**Issues (-2):**
+- `UpdateDeviceDto` passed into `DeviceService.updateDevice()` — DTO in service layer.
+- Does **not** use `SensorService` for cross-feature sensor validation — uses `EntityManager.find(Sensor.class, sensorId)`, same approach as the GPT 5.4 (Copilot) run.
+
+#### Code Quality — 8/10
+
+**Strengths:**
+- Rich JPA model: `@OneToMany` on Device → DeviceSensor, `@ManyToOne` with `@MapsId` back to `Sensor`.
+- `JOIN FETCH` query in repository for eager sensor loading.
+- Full sensor details (id, name, type, capabilities) returned in API response.
+- Named constraints in migration.
+- `TIMESTAMPTZ` in migration.
+- `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
+- `@Transactional(readOnly = true)` at class level with explicit `@Transactional` on mutating methods — correct transaction hygiene.
+- `hasSensor(Long sensorId)` domain method and `assignSensor(Sensor)` on `Device` entity — richer domain model than the GPT 5.4 (Copilot) run.
+
+**Issues (-2):**
+- Missing `@GeneratedValue` on `Device.id` — UUID is assigned via a null-guard in `@PrePersist` (`if (id == null) id = UUID.randomUUID()`), which works but is less idiomatic than `@GeneratedValue(strategy = GenerationType.UUID)`.
+- `id UUID` in migration without `NOT NULL` — the GPT 5.4 (Copilot) run used `id UUID NOT NULL`.
+
+> **Comparison with GPT 5.4 (Copilot) (37/40)**: The two implementations are architecturally near-identical — same `EntityManager.find` strategy, same `JOIN FETCH` repository query, same DTO structures and test structure. The GPT 5.4 (ChatGPT) run trades the missing `@GeneratedValue` and DTO-in-service leak for a richer domain model (idempotency logic in the entity, `@Transactional(readOnly = true)` class-level annotation) and a more complete test suite (adds `SensorDtoTest`). The net result is 35/40 vs 37/40 — GPT 5.4 (ChatGPT) is two points behind due to the DTO-in-service and missing `@GeneratedValue`, despite being marginally stronger on test coverage and transaction management.
+
+---
+
+### 14. GPT 5.3 Codex Extra-High
 **Total: 34 / 40**
 
 #### Completeness — 10/10
@@ -866,9 +919,9 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 
 | Issue | Implementations Affected |
 |-------|--------------------------|
-| No `SensorService` for cross-feature validation | All GPT models (5.4, Codex, Codex Low, Codex High, Codex xHigh), Haiku, Opus, Devstral |
-| DTOs passed to service layer | Sonnet, Haiku, GLM, Kimi, MiniMax, Devstral, Opus |
-| Missing `@GeneratedValue` on UUID entity | GLM, MiniMax, Devstral |
+| No `SensorService` for cross-feature validation | All GPT models (5.4 gh, 5.4 oai, Codex, Codex Low, Codex High, Codex xHigh), Haiku, Opus, Devstral |
+| DTOs passed to service layer | Sonnet, Haiku, GLM, Kimi, MiniMax, Devstral, Opus, GPT 5.4 (oai) |
+| Missing `@GeneratedValue` on UUID entity | GLM, MiniMax, Devstral, GPT 5.4 (oai) |
 | `TIMESTAMP` instead of `TIMESTAMPTZ` | Devstral, Devstral-Small |
 | Missing named FK/PK constraints | Devstral, Devstral-Small, DeepSeek, GPT 5.3 Codex |
 | Single underscore in migration filename | Devstral-Small (single `_`) |
@@ -886,7 +939,7 @@ A key differentiator across implementations is whether assigned sensor data is m
 | Quality | Model | Sensor data returned |
 |---------|-------|----------------------|
 | Full sensor details | Sonnet, GLM | Full `SensorDto` (id, name, type, capabilities) via `SensorService` or JPA graph traversal |
-| Full sensor details | GPT 5.4, GPT 5.3 Codex Low | Full `SensorDto`/`AssignedSensorDto` via `EntityManager.find` and JPA relationship |
+| Full sensor details | GPT 5.4 (gh), GPT 5.4 (oai), GPT 5.3 Codex Low | Full `SensorDto`/`AssignedSensorDto` via `EntityManager.find` and JPA relationship |
 | Full sensor details | GPT 5.3 Codex Extra-High | Full `SensorDto` via `JpaSensorLookupRepository` (layering violation) |
 | Partial data | Opus | `AssignedSensorDto(sensorId, assignedAt)` — identifies which sensor but no details |
 | IDs only | GPT 5.3 Codex, GPT 5.3 Codex High | `List<Long> sensorIds` — no sensor details |
@@ -899,8 +952,9 @@ A key differentiator across implementations is whether assigned sensor data is m
 
 ### Key Differentiators
 
-- **GPT 5.4** is the top scorer at 37/40 — the richest JPA model of the GPT group (`@MapsId`, `JOIN FETCH`, full `@OneToMany`). Its `EntityManager.find` approach for sensor validation is unconventional but avoids accessing package-protected repositories. All tests present and comprehensive. The only deduction is the SensorService bypass.
-- **Sonnet** and **GLM** tie at 35/40. Sonnet is the most complete working implementation. It is the only model that correctly used `SensorService` for cross-feature sensor validation. Its main weakness is the DTO-in-service pattern (present in nearly all non-GPT models). GLM rose to #2 on the strength of its relationship mapping (full JPA graph, richest sensor response) and broad test coverage. Its showstopper bugs (missing `@GeneratedValue`, Flyway schema misconfiguration) prevent the tests from passing, but the code structure and design quality are high.
+- **GPT 5.4 (GitHub Copilot)** is the top scorer at 37/40 — the richest JPA model (`@MapsId`, `JOIN FETCH`, full `@OneToMany`), no DTO-in-service leakage, `@GeneratedValue` present, and comprehensive tests. Its `EntityManager.find` approach for sensor validation is unconventional but avoids accessing package-protected repositories.
+- **GPT 5.4 (ChatGPT)** scores 35/40 — near-identical architecture to the GPT 5.4 (Copilot) run with two key differences: the service accepts `UpdateDeviceDto` directly (DTO leak) and `Device.id` lacks `@GeneratedValue` (compensated by a `@PrePersist` null-guard). On the other hand, it adds `SensorDtoTest` that the GPT 5.4 (Copilot) run was missing, uses `@Transactional(readOnly = true)` at class level, and encodes idempotency logic directly in the `Device` entity. The result is the same overall quality tier — just with different trade-offs. The two runs confirm that GPT 5.4 produces highly consistent, high-quality output regardless of the OpenCode version or provider endpoint used.
+- **Sonnet** and **GLM** also tie at 35/40. Sonnet is the most complete working implementation and the only model that correctly used `SensorService` for cross-feature sensor validation. GLM rose to the same level on the strength of its relationship mapping (full JPA graph, richest sensor response) and broad test coverage; its showstopper bugs (missing `@GeneratedValue`, Flyway schema misconfiguration) prevent the tests from passing but the code structure and design quality are high.
 - **GPT 5.3 Codex Extra-High, GPT 5.3 Codex, and GPT 5.3 Codex High** all tie at 34/40. Codex Extra-High invested the most effort time (20 min) and produced the most thorough test suite of any GPT model, but created `JpaSensorLookupRepository` — the most explicit layering violation in the evaluation. Codex and Codex High produced equally scored results at the default/high effort levels. Codex Low returns full sensor details; Codex and Codex High return only IDs. The additional effort levels deliver no measurable quality improvement.
 - **GPT 5.3 Codex Low** scored 33/40. Each Codex variant chose a different sensor validation strategy (JPQL, EntityManager, native SQL) — all bypass `SensorService`. This suggests GPT models better internalized the "services work with entities" rule but missed the cross-feature layering rule.
 - **Claude Opus 4.6** is 8th at 32/40. Architecturally unusual — it chose a `DataIntegrityViolationException` catch as a proxy for sensor validation, which is fragile and bypasses the layering rule. Despite being a top-tier plan producer, the implementation reflects less codebase alignment than Sonnet or GLM.
@@ -918,4 +972,4 @@ All models that produced a migration used the double-underscore separator correc
 
 The most pervasive single violation across the original evaluation models is passing DTOs into the service layer. Only **Sonnet** used `SensorService` correctly for cross-feature validation. Every non-GPT model that produced a service leaked at least one DTO type into it.
 
-Notably, **the GPT models appear to avoid the DTO-in-service pattern** — their service methods generally accept entity parameters or primitive types rather than DTOs. This is a significant improvement over the earlier model cohort. However, all five GPT models share a different universal violation: **none use `SensorService`** for cross-feature sensor validation. Each chose a different bypass strategy — `EntityManager.find` (GPT 5.4, Codex Low), JPQL query on the sensor table (Codex), native SQL (Codex High), or a custom `JpaSensorLookupRepository` (Codex Extra-High). This suggests that while GPT models better internalized the "services work with entities" rule, they missed the cross-feature layering rule that services should go through other feature services, not directly access other features' entities or tables.
+Notably, **the GPT 5.4 (Copilot) run avoids the DTO-in-service pattern** — its service methods accept entity parameters or primitive types, not DTOs. The **GPT 5.4 (ChatGPT) run**, however, did pass `UpdateDeviceDto` into the service, suggesting this is not a guaranteed property of the model but rather a run-to-run variation. The five GPT 5.3 Codex models also generally avoided DTOs in service methods. Regardless, both GPT 5.4 runs share a universal violation: **neither uses `SensorService`** for cross-feature sensor validation, opting instead for `EntityManager.find`. This suggests that while GPT 5.4 internalized the "services work with entities" rule, it consistently missed the cross-feature layering rule that services should go through other feature services, not directly access other features' entities or tables.
