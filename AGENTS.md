@@ -15,6 +15,10 @@
   - Package: `de.sfl.sensors`
   - Base URL: `/api/sensors`
   - Entities: Sensor (id, name, type, capabilities)
+- **Device Management**
+  - Package: `de.sfl.devices`
+  - Base URL: `/api/devices`
+  - Entities: Device (id, name, description, createdAt, updatedAt), DeviceSensor (deviceId, sensorId, assignedAt)
 
 # Managing AGENTS.md Size
 - **Current status**: This file fits comfortably in AI context windows
