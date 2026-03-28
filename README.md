@@ -5,32 +5,36 @@ The goal is to find a suitable setup for everyday feature development given real
 
 ## TL;DR
 
-**Best setup**: Use a [GitHub Copilot Pro subscription](https://github.com/features/copilot/plans) ($10/month) with **Claude Sonnet 4.6** for both planning and implementation. It scored highest on implementation among Anthropic models (35/40), produced the best plan after Opus (35/40), and completes a full feature in ~12 minutes across two prompts. **GPT 5.4** (also on Copilot Pro) is the top implementation scorer at 37/40.
+**Best setup**: Use a [GitHub Copilot Pro subscription](https://github.com/features/copilot/plans) ($10/month) with **Claude Sonnet 4.6** or **Claude Opus 4.6** for planning and **GPT 5.4** for implementation.
+GPT 5.4 is the top implementation scorer (37/40), while being under the fastest (~9 minutes), and costs the same 1 premium request as Sonnet. 
+Sonnet 4.6 works well as a single-model workflow (35/40 on both planning and implementation) if you prefer to keep everything in one model.
 
 **On a budget**: Use [Requesty](https://requesty.ai) with **GLM 4.7** for planning and **MiniMax M2.5** for implementation at ~$0.49/feature — the cheapest combination that produces a fully functional result (34/40 plan, 28/40 implementation).
 
-**Local models are insufficient for this workflow**: No local model on a Mac M4 Mini 32 GB produced a fully working result under these conditions. The best local implementation scored 13/40 and took 54 minutes. Simpler tasks, smaller context, or better model/hardware fit may yield different results — but that is out of scope for this evaluation.
+**Local models are insufficient for this workflow**: No local model on a Mac M4 Mini 32 GB produced a fully working result under these conditions. 
+The best local implementation scored 13/40 and took 54 minutes. 
+Simpler tasks, smaller context, or better model/hardware fit may yield different results — but that is out of scope for this evaluation.
 
 ### Tier Overview
 
 | Tier | Models | Plan | Impl | Cost per feature | Time |
 |------|--------|:----:|:----:|:----------------:|:----:|
-| **Recommended** | Claude Sonnet 4.6 | 35 | 35 | $10/mo · ~$0.03/prompt † | ~12m |
 | **Recommended** | GPT 5.4 | — | 37 | $10/mo · ~$0.03/prompt † | ~9m ‡‡ |
+| **Recommended** | Claude Sonnet 4.6 | 35 | 35 | $10/mo · ~$0.03/prompt † | ~12m |
 | **Recommended** | Claude Opus 4.6 (planning only) | 36 | 32 | $10/mo · ~$0.09/prompt † | ~15m |
 | **Strong alternative** | GLM 4.7 | 34 | 35 | ~$2.71 | ~15m |
 | **Viable** | GPT 5.3 Codex Extra-High | — | 34 | $20/mo · ~$0.08/task ‡ | ~20m ‡‡ |
 | **Viable** | GPT 5.3 Codex | — | 34 | $20/mo · ~$0.04/task ‡ | ~10m ‡‡ |
 | **Viable** | GPT 5.3 Codex High | — | 34 | $20/mo · ~$0.04/task ‡ | ~14m ‡‡ |
 | **Viable** | GPT 5.3 Codex Low | — | 33 | $20/mo · ~$0.02/task ‡ | ~9m ‡‡ |
-| **Viable** | Claude Haiku 4.5 | 25 | 31 | $10/mo · ~$0.03/prompt † | ~14m |
+| **Viable** | Claude Haiku 4.5 | 25 | 31 | $10/mo · ~$0.01/prompt † | ~14m |
 | **Viable** | Kimi K2.5 | 29 | 29 | ~$1.84 | ~7m |
 | **Viable** | MiniMax M2.5 | 27 | 28 | ~$0.26 | ~14m |
 | **Not recommended** | Devstral (cloud) | 26 | 25 | free* | ~28m |
 | **Not recommended** | All local models | 9-14 | 5-13 | free | 18-54m |
 | **Not recommended** | Qwen Turbo, DeepSeek-V3.2 | 8-12 | 4-8 | <$0.60 | 12m+ |
 
-> † GitHub Copilot Pro ($10/month) includes 300 premium requests. Haiku, Sonnet, and GPT 5.4 cost 1 request each (~$0.03); Opus costs 3 requests (~$0.09). Additional requests are $0.04 each.
+> † GitHub Copilot Pro ($10/month) includes 300 premium requests. Haiku costs 0.33 requests (~$0.01); Sonnet and GPT 5.4 cost 1 request each (~$0.03); Opus costs 3 requests (~$0.09). Additional requests are $0.04 each.
 >
 > ‡ ChatGPT Plus ($20/month) with usage caps. Cost per task is estimated from the daily cap (see [Cost Guidance](#cost-guidance) for details). Planning evaluation pending for GPT models.
 >
@@ -176,14 +180,15 @@ Each model consumes a different number of premium requests per prompt:
 
 | Model | Premium requests per prompt |
 |-------|:---------------------------:|
-| Claude Haiku 4.5 | 1 |
+| Claude Haiku 4.5 | 0.33 |
 | Claude Sonnet 4.6 | 1 |
 | Claude Opus 4.6 | 3 |
 | GPT 5.4 | 1 |
 
 ### Cloud via ChatGPT Plus (subscription)
 
-[ChatGPT Plus](https://openai.com/chatgpt/pricing/) costs $20/month and includes access to GPT 5.3 Codex at multiple effort levels. Unlike token-based pricing, ChatGPT Plus uses **daily and weekly usage caps** — each task consumes a percentage of your daily/weekly budget.
+[ChatGPT Plus](https://openai.com/chatgpt/pricing/) costs $20/month and includes access to GPT 5.3 Codex at multiple effort levels. 
+Unlike token-based pricing, ChatGPT Plus uses **daily and weekly usage caps** — each task consumes a percentage of your daily/weekly budget.
 
 | Model | Effort | Daily cap per task | Weekly cap per task | Est. cost per task |
 |-------|--------|:------------------:|:-------------------:|:------------------:|
@@ -192,11 +197,15 @@ Each model consumes a different number of premium requests per prompt:
 | GPT 5.3 Codex High | High | 8% | 2% | ~$0.04 |
 | GPT 5.3 Codex Extra-High | Extra-High | 12% | 4% | ~$0.08 |
 
-**Cost calculation**: Estimated cost per task uses the daily cap as the binding constraint: tasks/day = 100% / daily%, tasks/month = tasks/day × 30, cost/task = $20 / tasks/month. The weekly cap provides an additional ceiling that prevents binge-coding sessions from consuming a disproportionate share.
+**Cost calculation**: Estimated cost per task uses the weekly cap as the binding constraint.
+Based on the numbers per task, the weekly limit will be hit after hitting the daily cap ~4 times in a row.
 
-**Impact for hobby coders**: The daily cap matters most. At the default effort level (6% daily), you can run ~16 tasks per day — sufficient for most hobby coding sessions. The weekly cap (2% = 50 tasks/week) only becomes binding if you consistently code every day. At extra-high effort (12% daily), you're limited to ~8 tasks per day, which may feel constraining during intense development sessions.
+**Impact for hobby coders**: The daily cap matters most. 
+At the default effort level (6% daily), you can run ~16 implementation tasks per day. 
+The weekly cap (2% = 50 tasks/week) only becomes binding if you consistently code every day. 
+At extra-high effort (12% daily), you're limited to ~8 tasks per day, which may feel constraining during intense development sessions.
 
-**Note**: GPT 5.3 Codex models were only evaluated for implementation, not planning. They run as asynchronous background tasks in ChatGPT, not as interactive sessions like GitHub Copilot or Requesty.
+**Note**: GPT 5.3 Codex models were only evaluated for implementation, not planning.
 
 ### Cloud via Requesty (pay-per-use)
 
@@ -292,7 +301,7 @@ All models implemented the feature using the Claude Haiku 4.5 plan as a shared b
 - **GPT 5.4 is the top scorer at 37/40** — the richest JPA model (`@MapsId`, `JOIN FETCH`, full `@OneToMany`) with full sensor details in 9 minutes. It bypasses `SensorService` via `EntityManager.find` but avoids accessing package-protected repositories, making it a middle-ground approach.
 - **Sonnet and GLM tie at 35/40**. Sonnet is the only model that correctly used `SensorService` for cross-feature sensor validation — the architecturally cleanest implementation. GLM produced the richest API response via JPA graph traversal.
 - **GPT 5.3 Codex, Codex High, and Codex Extra-High all score 34/40**, forming a tight cluster. Extra-High added more test depth but introduced a layering violation (`JpaSensorLookupRepository`). Codex and Codex High are cleaner at the same score.
-- **GPT 5.3 Codex effort levels show diminishing returns**: Low (33/40, 9m), Default (34/40, 10m), High (34/40, 14m), Extra-High (34/40, 20m). Default effort is the best value for this codebase.
+- **GPT 5.3 Codex effort levels show diminishing returns for implementation**: Low (33/40, 9m), Default (34/40, 10m), High (34/40, 14m), Extra-High (34/40, 20m). Default effort is the best value for implementation. Planning has not yet been evaluated for GPT models.
 - **Opus plans well but implements at 32/40** — it caught a `DataIntegrityViolationException` as a proxy for sensor validation, bypassing the layering rule. Planning ability does not predict implementation quality.
 - **Kimi was the fastest cloud model (6 min)** but shipped a critical `findAll().stream().filter()` performance bug that would break at scale.
 - **GPT models generally avoided the DTO-in-service anti-pattern** that affected nearly all other models — a notable improvement in instruction-following for service layer boundaries.
@@ -351,7 +360,7 @@ For a complete plan + implementation cycle:
 |-------|:----------:|:--------------:|:----:|
 | Claude Sonnet 4.6 | ~12m | 70/80 | subscription |
 | GLM 4.7 | ~15m | 69/80 | ~$2.71 |
-| Kimi K2.5 | ~7m | 58/80 | ~$1.84 |
+| Kimi K2.5 | ~6m | 58/80 | ~$1.84 |
 | Claude Haiku 4.5 | ~14m | 56/80 | subscription |
 
 For implementation only (GPT models — planning evaluation pending):
@@ -375,14 +384,14 @@ The key question for hobby coders: **is a GitHub Copilot subscription worth it, 
 
 GitHub Copilot Pro costs $10/month and includes **300 premium requests**.
 Each request costs $10 / 300 = **\~$0.033**.
-Haiku and Sonnet consume **1 request** per prompt; Opus consumes **3 requests**.
+Haiku consumes **0.33 requests** per prompt (~$0.01); Sonnet and GPT 5.4 consume **1 request** (~$0.03); Opus consumes **3 requests** (~$0.09).
 This evaluation used **2 prompts per feature** (plan + implementation).
 
 | Workflow | Requests per feature | Cost per feature |
 |----------|:--------------------:|:----------------:|
 | Sonnet plan + Sonnet impl | 2 | ~$0.07 |
 | Opus plan + Sonnet impl | 4 | ~$0.13 |
-| Haiku plan + Haiku impl | 2 | ~$0.07 |
+| Haiku plan + Haiku impl | 0.66 | ~$0.02 |
 
 Additional requests beyond 300 are billed at **$0.04 each**.
 
@@ -429,7 +438,7 @@ ChatGPT Plus costs $20/month and provides access to GPT 5.3 Codex at multiple ef
 
 **Key insight for hobby coders**: The daily cap is the practical constraint. At the default effort level, ~16 tasks per day is ample for hobby coding. The weekly cap (e.g., 2% = 50 tasks/week) only matters if you code intensively every day.
 
-**Diminishing returns on effort**: Default, High, and Extra-High all scored 34/40. Low scored 33/40. Extra-High gained nothing over Default for double the cost and double the time. **The default effort level is the best value** — higher effort buys more thorough tests but not better architecture.
+**Diminishing returns on effort (implementation)**: Default, High, and Extra-High all scored 34/40. Low scored 33/40. Extra-High gained nothing over Default for double the cost and double the time. **The default effort level is the best value for implementation** — higher effort buys more thorough tests but not better architecture. Planning has not yet been evaluated for GPT models, so the picture may differ there.
 
 **ChatGPT Plus vs. GitHub Copilot Pro**: For pure implementation quality, GPT 5.4 on Copilot Pro ($10/mo, 37/40) significantly outperforms all Codex variants on ChatGPT Plus ($20/mo, 33-34/40). The only reason to prefer ChatGPT Plus is if you need its other features (web browsing, file upload, DALL-E, etc.) and want coding as an add-on. For dedicated coding, Copilot Pro with GPT 5.4 (37/40) or Sonnet 4.6 (35/40) is both cheaper and higher quality.
 
@@ -485,7 +494,7 @@ Nemotron 3 Nano 30B (11/40) took 54 minutes and stopped without feedback. Gemma 
 
 ### Models to Avoid
 
-- **GPT 5.3 Codex High/Extra-High effort levels**: No meaningful quality improvement over the default effort level (34/40 for all) at 1.5-2× the time and cost. Stick with default effort.
+- **GPT 5.3 Codex High/Extra-High effort levels for implementation**: No meaningful quality improvement over the default effort level (34/40 for all) at 1.5-2× the time and cost. Stick with default effort for implementation. Planning has not yet been evaluated for GPT models — higher effort levels may prove worthwhile there.
 - **Qwen Turbo**: Cheapest cloud option but consistently failed at tool calling — not usable for either role.
 - **DeepSeek-V3.2**: Aborted mid-implementation yet still cost ~$0.57 — poor value for any result.
 - **Gemini 3.1 Flash Lite**: Failed completely; unable to call tools consistently.
