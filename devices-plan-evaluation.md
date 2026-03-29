@@ -11,6 +11,8 @@
 
 All scores are on a 1–10 scale. The **baseline** (`devices-feature.md` on the current branch) is used as a calibration reference and is not ranked.
 
+Plans were also checked qualitatively for whether they point mapping toward DTO-owned transformation (`DeviceDto.from(entity)`, `dto.toEntity()`) rather than controller-side mapping.
+
 ---
 
 ## Key Reference Points (from Codebase & Pattern Docs)
@@ -34,6 +36,7 @@ Before evaluating, the following facts from the codebase were established as gro
 - **Migration filename**: `V<YYYYMMDDHHmm>__description.sql` with double underscore.
 - **AGENTS.md must be updated** with the new feature entry.
 - **Layering rule**: Services must not access repositories from other feature packages — they must call `SensorService` to validate sensor existence, not `JpaSensorRepository` directly.
+- **DTO mapping style**: Prefer DTO-owned mapping such as `DeviceDto.from(entity)` and `dto.toEntity()`; plans that leave mapping in controllers are weaker.
 
 ---
 
@@ -44,15 +47,28 @@ Before evaluating, the following facts from the codebase were established as gro
 | 1  | Claude Opus 4.6 | 9 | 9 | 9 | 9 | **36** |
 | 2  | Claude Sonnet 4.6 | 9 | 9 | 8 | 9 | **35** |
 | 3  | GLM 4.7 | 8 | 8 | 9 | 9 | **34** |
-| 4  | Kimi K2.5 | 7 | 8 | 8 | 6 | **29** |
-| 5  | MiniMax 2.5 | 6 | 8 | 7 | 6 | **27** |
-| 6  | Devstral | 5 | 7 | 7 | 7 | **26** |
+| 4  | GPT 5.4 (GitHub Copilot) | 8 | 7 | 8 | 7 | **30** |
+| 4  | GPT 5.3 Codex | 8 | 7 | 8 | 7 | **30** |
+| 6  | GPT 5.4 (ChatGPT) | 7 | 7 | 8 | 7 | **29** |
+| 6  | Kimi K2.5 | 7 | 8 | 8 | 6 | **29** |
+| 6  | GPT 5.3 Codex Extra-High | 7 | 7 | 8 | 7 | **29** |
+| 9  | MiniMax 2.5 | 6 | 8 | 7 | 6 | **27** |
+| 10 | GPT 5.3 Codex High | 7 | 6 | 7 | 6 | **26** |
+| 10 | Devstral | 5 | 7 | 7 | 7 | **26** |
+| 12 | GPT 5.3 Codex Low | 6 | 6 | 7 | 6 | **25** |
 | —  | Claude Haiku 4.5 *(baseline)* | 5 | 4 | 8 | 8 | **25** |
-| 7  | Nemotron 3 Nano 30B (local) | 3 | 2 | 5 | 4 | **14** |
-| 8  | DeepSeek 3.2 | 3 | 2 | 4 | 3 | **12** |
-| 9  | Devstral Small 2 25.12 (local) | 3 | 2 | 5 | 2 | **12** |
-| 10 | GPT-OSS Safeguard 20B (local) | 2 | 1 | 3 | 3 | **9** |
-| 11 | Qwen Turbo | 3 | 2 | 2 | 1 | **8** |
+| 13 | Nemotron 3 Nano 30B (local) | 3 | 2 | 5 | 4 | **14** |
+| 14 | DeepSeek 3.2 | 3 | 2 | 4 | 3 | **12** |
+| 14 | Devstral Small 2 25.12 (local) | 3 | 2 | 5 | 2 | **12** |
+| 16 | GPT-OSS Safeguard 20B (local) | 2 | 1 | 3 | 3 | **9** |
+| 17 | Qwen Turbo | 3 | 2 | 2 | 1 | **8** |
+
+### Key Differences by Category
+
+- **Top tier**: Claude Opus 4.6, Claude Sonnet 4.6, and GLM 4.7 remain the strongest planners because they combine codebase-specific detail, solid architecture, and implementation-ready guidance.
+- **Strong GPT mid-tier**: GPT 5.4 (GitHub Copilot), GPT 5.3 Codex, GPT 5.4 (ChatGPT), and GPT 5.3 Codex Extra-High produce usable, well-structured plans, but they are less codebase-specific than the top tier and usually miss explicit pagination and DTO-mapping guidance. GPT 5.3 Codex Extra-High has the most detailed migration schema of any GPT plan but is penalized for inventing a one-device-per-sensor business rule.
+- **Useful but weaker**: Kimi K2.5, MiniMax 2.5, Devstral, and GPT 5.3 Codex Low cover most required artifacts, but lose points through generic guidance, cross-package layering violations, under-specified persistence choices, or thinner implementation detail.
+- **Not reliable enough**: local plans, DeepSeek, GPT-OSS, and Qwen remain too incomplete, too generic, or too inconsistent to serve as strong implementation guides.
 
 > **Note:** The baseline (`devices-feature.md`, Claude Haiku 4.5) is included in the ranking row above for direct comparison. Local LLM plans are marked with *(local)*.
 
@@ -308,7 +324,201 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 4. Kimi K2.5
+### 4. GPT 5.4 (GitHub Copilot)
+**Total: 30 / 40**
+
+#### AGENTS.md Compliance — 8/10
+
+**Strengths:**
+- Uses dedicated feature package `de.sfl.devices` and correct base URL `/api/devices`.
+- Explicitly keeps the repository package-private and wires beans through `DeviceConfiguration`.
+- Uses `SensorService` for cross-feature validation rather than direct repository access.
+- Includes `AGENTS.md` update, controller tests, service tests, repository IT, and JSON model tests.
+- Supports idempotent assignment semantics and keeps DTOs in the controller layer.
+
+**Issues (-2):**
+- Does not mention keyset pagination or `PageResult<T>`.
+- Does not explicitly state the preferred DTO-owned mapping style such as `DeviceDto.from(entity)` / `dto.toEntity()`.
+
+#### Codebase Fit — 7/10
+
+**Strengths:**
+- Aligns well with package-by-feature structure and layered design.
+- Reuses `SensorService` correctly and plans repository integration tests.
+- Mentions timestamp alignment with the existing sensor feature.
+
+**Issues (-3):**
+- Uses `Long` generated IDs for devices rather than matching the newer prompt/evaluation assumption of UUID-based devices.
+- Leaves migration specifics generic instead of calling out named constraints in the established style.
+- Omits `RepositoryIT` / `PageResult<T>`-level alignment details that the top plans include explicitly.
+
+#### Completeness — 8/10
+
+**Covered:** Feature registration, endpoints, entity, repository, service, DTOs, configuration, exceptions, migration, tests, AGENTS.md update, OpenAPI annotations, and verification commands.
+
+**Issues (-2):**
+- No list endpoint or pagination plan.
+- Relationship details and sensor cardinality remain somewhat under-specified.
+
+#### Detail Level — 7/10
+
+**Strengths:**
+- Clear endpoint table, service behaviors, test scenarios, and implementation sequence.
+- Verification commands are included.
+
+**Issues (-3):**
+- No concrete code snippets.
+- Migration remains high level without code or named-constraint examples.
+- DTO mapping guidance is implied rather than explicitly described.
+
+---
+
+### 5. GPT 5.3 Codex
+**Total: 30 / 40**
+
+#### AGENTS.md Compliance — 8/10
+
+**Strengths:**
+- Keeps all code in `de.sfl.devices` and plans explicit `DeviceConfiguration` bean wiring.
+- Calls out `SensorService` instead of cross-package repository access.
+- Includes DTOs, exception handler, tests, and `AGENTS.md` update.
+- Ends with `mvn verify`.
+
+**Issues (-2):**
+- No keyset pagination / `PageResult<T>`.
+- Does not explicitly prefer DTO-owned mapping over controller-side mapping.
+
+#### Codebase Fit — 7/10
+
+**Strengths:**
+- Correct use of `BIGSERIAL`, `TIMESTAMPTZ`, join table, and feature-local package structure.
+- Includes a dedicated migration, tests, and service/controller split matching the codebase.
+
+**Issues (-3):**
+- Generic migration guidance with no explicit named constraints.
+- No explicit `RepositoryIT` reference.
+- Limited alignment with existing DTO transformation conventions.
+
+#### Completeness — 8/10
+
+**Covered:** Migration, package structure, entity, service, repository, DTOs, exception handler, controller, tests, AGENTS.md update, and verification.
+
+**Issues (-2):**
+- No GET list endpoint or pagination flow.
+- Uniqueness handling is mentioned but not fully translated into repository/query details.
+
+#### Detail Level — 7/10
+
+**Strengths:**
+- Good API breakdown, implementation order, and test coverage outline.
+- Includes concrete verification steps.
+
+**Issues (-3):**
+- Mostly prose, few implementation-ready specifics.
+- No code snippets.
+- DTO mapping style is left implicit.
+
+---
+
+### 6. GPT 5.4 (ChatGPT)
+**Total: 29 / 40**
+
+#### AGENTS.md Compliance — 7/10
+
+**Strengths:**
+- Dedicated feature package, clear endpoint set, explicit `DeviceConfiguration`, and `AGENTS.md` update.
+- Mentions using a narrow sensor service API when cross-package repository access would violate the rules.
+- Covers controller, service, repository, and DTO tests.
+
+**Issues (-3):**
+- Leaves the layering decision slightly open-ended instead of committing cleanly to `SensorService`.
+- No keyset pagination / `PageResult<T>`.
+- No explicit DTO-owned mapping guidance.
+
+#### Codebase Fit — 7/10
+
+**Strengths:**
+- Good package-by-feature alignment and awareness of layered architecture constraints.
+- Includes migration, validation, exception handling, and tests in the expected shape.
+
+**Issues (-3):**
+- Stays generic on migration details rather than matching named-constraint and repository-test conventions closely.
+- Does not explicitly anchor timestamps, repository style, or test base classes to the existing codebase.
+- Leaves sensor cardinality and payload design partly open.
+
+#### Completeness — 8/10
+
+**Covered:** Endpoints, DTOs, service, repository, configuration, migration, tests, AGENTS.md update, and acceptance criteria.
+
+**Issues (-2):**
+- No list endpoint or pagination support.
+- Several implementation choices remain undecided rather than fully planned.
+
+#### Detail Level — 7/10
+
+**Strengths:**
+- Clear structure, implementation order, and coverage of major artifacts.
+- Includes acceptance criteria and testing areas.
+
+**Issues (-3):**
+- Lacks code snippets.
+- Leaves important design choices as open notes.
+- DTO mapping style is not spelled out.
+
+---
+
+### 7. Kimi K2.5
+**Total: 29 / 40**
+
+### 8. GPT 5.3 Codex Extra-High
+**Total: 29 / 40**
+
+#### AGENTS.md Compliance — 7/10
+
+**Strengths:**
+- Dedicated feature package, explicit DTO/controller/service/repository split, and `DeviceConfiguration`.
+- Uses `SensorService` rather than direct sensor repository access.
+- Includes `AssignDeviceSensorsDto`, tests, migration, and AGENTS update.
+
+**Issues (-3):**
+- Invents a one-device-per-sensor business rule not present in the prompt.
+- No keyset pagination / `PageResult<T>`.
+- No explicit DTO-owned mapping guidance.
+
+#### Codebase Fit — 7/10
+
+**Strengths:**
+- Most schema-specific migration of any GPT plan: lists exact column types (`BIGSERIAL`, `VARCHAR(255)`, `TEXT`, `TIMESTAMPTZ`), composite PK, FK with `ON DELETE CASCADE`, and named indexes.
+- Reasonable package structure and testing plan.
+- Recognizes layered-architecture concerns.
+
+**Issues (-3):**
+- Introduces a uniqueness constraint on `sensor_id` that changes the domain semantics.
+- Does not reference `RepositoryIT` or other codebase-specific testing conventions explicitly.
+- Does not use named constraints (`CONSTRAINT pk_...`, `CONSTRAINT fk_...`) despite providing detailed column definitions.
+
+#### Completeness — 8/10
+
+**Covered:** Migration, entity, repository, service, DTOs, configuration, controller, tests, AGENTS.md update, implementation order, and acceptance criteria.
+
+**Issues (-2):**
+- No GET list endpoint or pagination support.
+- A major invented constraint reduces confidence that the implementation would match the requested feature.
+
+#### Detail Level — 7/10
+
+**Strengths:**
+- Clear API design, class list, service plan, and test coverage.
+- Includes acceptance criteria and implementation order.
+
+**Issues (-3):**
+- No code snippets.
+- Important DB and repository details remain abstract.
+- DTO mapping guidance is absent.
+
+---
+
+### 9. Kimi K2.5
 **Total: 29 / 40**
 
 #### AGENTS.md Compliance — 7/10
@@ -372,7 +582,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 5. MiniMax 2.5
+### 10. MiniMax 2.5
 **Total: 27 / 40**
 
 #### AGENTS.md Compliance — 6/10
@@ -435,7 +645,108 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 6. Devstral
+### 11. GPT 5.3 Codex High
+**Total: 26 / 40**
+
+#### AGENTS.md Compliance — 7/10
+
+**Strengths:**
+- Correct package, base URL, explicit `SensorService` usage, and `DeviceConfiguration`.
+- Includes DTOs, exception handling, tests, and AGENTS update.
+
+**Issues (-3):**
+- No keyset pagination / `PageResult<T>`.
+- No explicit package-protected repository statement.
+- No explicit DTO-owned mapping guidance.
+
+#### Codebase Fit — 6/10
+
+**Strengths:**
+- Uses `BIGSERIAL`, `TIMESTAMPTZ`, join table semantics, and service/controller layering.
+- Includes duplicate-name handling and tests.
+
+**Issues (-4):**
+- Too generic compared with the codebase-specific detail in stronger plans.
+- No named-constraint examples.
+- No `RepositoryIT` reference.
+- Leaves several persistence and mapping decisions at a conceptual level.
+
+#### Completeness — 7/10
+
+**Covered:** Core CRUD endpoints, repository, service, DTOs, tests, migration, and AGENTS update.
+
+**Issues (-3):**
+- No list endpoint or pagination.
+- No explicit repository IT base-class alignment.
+- Verification is weaker than in the stronger GPT plans.
+
+#### Detail Level — 6/10
+
+**Strengths:**
+- Clear endpoint descriptions and implementation steps.
+- Includes core tests and service responsibilities.
+
+**Issues (-4):**
+- Mostly generic prose.
+- No code snippets.
+- Limited codebase-specific persistence detail.
+- DTO mapping style is not addressed.
+
+---
+
+### 12. GPT 5.3 Codex Low
+**Total: 25 / 40**
+
+#### AGENTS.md Compliance — 6/10
+
+**Strengths:**
+- Uses the correct feature package `de.sfl.devices` and base URL `/api/devices`.
+- Explicitly says the `devices` feature should interact with sensors through service boundaries.
+- Includes configuration, controller, service, repository, tests, and AGENTS.md update.
+- Covers idempotent assignment semantics and main HTTP status codes.
+
+**Issues (-4):**
+- Introduces DTO names like `DeviceCreateRequestDto` / `DeviceUpdateRequestDto` instead of the codebase's `CreateDeviceDto` / `UpdateDeviceDto` style.
+- Leaves the data model ambiguous and suggests a one-to-many `Sensor.device_id` approach as a primary option.
+- No explicit keyset pagination / `PageResult<T>`.
+- No explicit DTO-owned mapping guidance.
+
+#### Codebase Fit — 6/10
+
+**Strengths:**
+- Understands package-by-feature structure and the need for service-boundary interaction with sensors.
+- Includes migration, repository IT, and explicit bean configuration.
+
+**Issues (-4):**
+- Uses generic `device` table naming instead of the established pluralized schema style.
+- The proposed cardinality is under-specified and leans toward a one-to-many model that conflicts with the stronger plans and the evaluation baseline.
+- No mention of named constraints, `TIMESTAMPTZ`, `RepositoryIT`, or `PageResult<T>`.
+- DTO naming is less aligned with the codebase.
+
+#### Completeness — 7/10
+
+**Covered:** Feature package, API contract, entity, migration, service, repository, DTOs, configuration, tests, AGENTS.md update, and delivery sequence.
+
+**Issues (-3):**
+- No list endpoint or pagination support.
+- Persistence strategy for sensor assignment is not cleanly settled.
+- Missing codebase-specific repository and migration details needed for implementation confidence.
+
+#### Detail Level — 6/10
+
+**Strengths:**
+- Good structure, acceptance criteria, and phased delivery order.
+- Covers testing and idempotency behavior explicitly.
+
+**Issues (-4):**
+- Mostly prose, no code snippets.
+- Leaves multiple architectural choices open.
+- Uses generic naming and persistence options instead of concrete repo-aligned decisions.
+- DTO mapping style is not addressed.
+
+---
+
+### 13. Devstral
 **Total: 26 / 40**
 
 #### AGENTS.md Compliance — 5/10
@@ -502,7 +813,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 7. Nemotron 3 Nano 30B a3b MLX 4bit (local)
+### 14. Nemotron 3 Nano 30B a3b MLX 4bit (local)
 **Total: 14 / 40**
 
 #### AGENTS.md Compliance — 3/10
@@ -583,7 +894,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 8. DeepSeek 3.2
+### 15. DeepSeek 3.2
 **Total: 12 / 40**
 
 #### AGENTS.md Compliance — 3/10
@@ -636,7 +947,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 9. Devstral Small 2 25.12 (local)
+### 16. Devstral Small 2 25.12 (local)
 **Total: 12 / 40**
 
 #### AGENTS.md Compliance — 3/10
@@ -703,7 +1014,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 10. GPT-OSS Safeguard 20B MLX MXFP4 (local)
+### 17. GPT-OSS Safeguard 20B MLX MXFP4 (local)
 **Total: 9 / 40**
 
 #### AGENTS.md Compliance — 2/10
@@ -783,7 +1094,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ---
 
-### 11. Qwen Turbo
+### 18. Qwen Turbo
 **Total: 8 / 40**
 
 #### AGENTS.md Compliance — 3/10
@@ -838,7 +1149,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ## Cross-Plan Analysis
 
-### Common Strengths Across Top Plans (Opus, Kimi, Sonnet, GLM)
+### Common Strengths Across Top Plans (Opus, Sonnet, GLM)
 - All use `BIGSERIAL`/`Long` IDs consistent with the existing codebase.
 - All use `TIMESTAMPTZ`.
 - All specify package-protected repositories.
@@ -855,9 +1166,12 @@ Before evaluating, the following facts from the codebase were established as gro
 | Lombok usage | Baseline (Haiku 4.5) |
 | `TIMESTAMP` instead of `TIMESTAMPTZ` | Baseline, DeepSeek |
 | Missing named FK/PK constraint naming | Devstral, DeepSeek, partial in others |
+| Generic DTO naming (`*RequestDto`) | GPT 5.3 Codex Low, Nemotron 3 Nano 30B |
 | `DeviceController` wired manually as a bean in `@Configuration` | Devstral, Kimi |
 | `DeviceService` interface + `DeviceServiceImpl` / `JpaDeviceService` | Devstral (cloud), Devstral Small 2 (local) |
 | DTOs passed to service layer | Baseline |
+| DTO-owned mapping not stated explicitly | GPT 5.4 (gh), GPT 5.4 (oai), GPT 5.3 Codex, GPT 5.3 Codex High, GPT 5.3 Codex Extra-High |
+| No keyset pagination / `PageResult<T>` | GPT 5.4 (gh), GPT 5.4 (oai), GPT 5.3 Codex, GPT 5.3 Codex High, GPT 5.3 Codex Extra-High, GPT 5.3 Codex Low |
 | No JSON model tests | DeepSeek, Qwen, all three local plans |
 | No AGENTS.md update | DeepSeek, Qwen, partial; all three local plans |
 | `@Service`/`@Repository` annotations explicitly used | GPT-OSS Safeguard 20B |
@@ -870,6 +1184,12 @@ Before evaluating, the following facts from the codebase were established as gro
 - **Sonnet** has the most complete `DeviceConfiguration` code, the cleanest bulk-assign API design (`PUT /{id}/sensors` with body enabling unassignment), and the strongest cross-cutting concerns discussion.
 - **GLM** provides the most complete Java code examples overall, including transaction details, controller methods with OpenAPI annotations, `@Query`/`@Param` repository methods, configuration, and exception handling — the most immediately actionable plan for implementation. Like Opus, uses `@ManyToMany` directly on the entity.
 - **GLM** is the only plan to include `@EntityGraph` for avoiding N+1 queries on the sensor relationship and a unique constraint on device name in the DB schema.
+- **GPT 5.4 (GitHub Copilot)** is the strongest GPT planner: good layering, explicit configuration, practical testing plan, and a clear feature outline, but still less codebase-specific than the top three plans.
+- **GPT 5.3 Codex** is the cleanest ChatGPT Codex planning result: solid structure, correct technology choices, and a useful verification flow, but generic on pagination, mapping style, and migration specifics.
+- **GPT 5.4 (ChatGPT)** is similar in overall quality to Kimi: sensible and complete, but more abstract than the top GPT plans and less anchored to existing repository conventions.
+- **GPT 5.3 Codex Extra-High** has the most specific migration schema of any GPT plan (exact column types, `TIMESTAMPTZ`, named indexes), but weakens itself by inventing a one-device-per-sensor rule not present in the requirements.
+- **GPT 5.3 Codex High** is serviceable but notably generic, making it less implementation-ready than the stronger GPT plans.
+- **GPT 5.3 Codex Low** is fast and reasonably structured, but drifts on DTO naming and leaves the sensor-assignment persistence model too open to rank above the baseline.
 - **Kimi** stands out for its detailed API Specification section with full request/response JSON examples for all endpoints. However, most implementation sections (service, repository, controller, entity) are prose bullet lists with no code.
 - **MiniMax** is the most concise correct plan — covers all required artifacts but lacks implementation detail beyond DTOs.
 - **DeepSeek** introduces multiple invented requirements (optimistic locking, soft deletes, sensor exclusivity constraint) that would derail implementation.
