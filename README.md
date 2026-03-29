@@ -5,11 +5,11 @@ The goal is to find a suitable setup for everyday feature development given real
 
 ## TL;DR
 
-**Best setup**: Use a [GitHub Copilot Pro subscription](https://github.com/features/copilot/plans) ($10/month) with **Claude Sonnet 4.6** or **Claude Opus 4.6** for planning and **GPT 5.4** for implementation.
-GPT 5.4 is the top implementation scorer (37/40 via GitHub Copilot) and now also plans competently (30/40), but Claude models remain clearly better planners.
+**Best setup**: Use a [GitHub Copilot Pro subscription](https://github.com/features/copilot/plans) ($10/month) with **Claude Sonnet 4.6** (~$0.03/prompt) or **Claude Opus 4.6** (~$0.09/prompt, 3× Sonnet cost) for planning and **GPT 5.4** (~$0.03/prompt) for implementation.
+GPT 5.4 is the top implementation scorer and also plans competently (30/40), but Claude models remain clearly better planners.
 Sonnet 4.6 remains the best single-model workflow (35/40 planning, 34/40 implementation) if you prefer to keep everything in one model.
 
-**On a budget**: Use [Requesty](https://requesty.ai) with **GLM 4.7** for planning and **MiniMax M2.5** for implementation at ~$0.49/feature — the cheapest combination that produces a fully functional result (34/40 plan, 28/40 implementation).
+**No subscription**: Use [Requesty](https://requesty.ai) with **GLM 4.7** for planning and **MiniMax M2.5** for implementation at ~$0.49/feature — the cheapest pay-per-use combination that produces a fully functional result (34/40 plan, 28/40 implementation). A Copilot Pro subscription is cheaper per feature if you implement more than ~24 features/month.
 
 **Local models are insufficient for this workflow**: No local model on a Mac M4 Mini 32 GB produced a fully working result under these conditions. 
 The best local implementation scored 13/40 and took 54 minutes. 
@@ -17,29 +17,27 @@ Simpler tasks, smaller context, or better model/hardware fit may yield different
 
 ### Tier Overview
 
-| Tier | Models | Plan | Impl | Cost per feature | Time |
-|------|--------|:----:|:----:|:----------------:|:----:|
-| **Recommended** | GPT 5.4 (Copilot) | 30 | 37 | $10/mo · ~$0.07/feature † | ~10m |
-| **Recommended** | Claude Sonnet 4.6 | 35 | 34 | $10/mo · ~$0.07/feature † | ~12m |
-| **Recommended** | Claude Opus 4.6 | 36 | 32 | $10/mo · ~$0.20/feature † | ~15m |
-| **Strong alternative** | GLM 4.7 | 34 | 34 | ~$2.71 | ~15m |
-| **Viable** | GPT 5.4 (ChatGPT) | 29 | 35 | $20/mo · ~8% daily cap/feature ‡ | ~10m |
-| **Viable** | GPT 5.3 Codex | 30 | 34 | $20/mo · ~7% daily cap/feature ‡ | ~11m |
-| **Viable** | GPT 5.3 Codex Extra-High | 29 | 34 | $20/mo · ~14% daily cap/feature ‡ | ~23m |
-| **Viable** | GPT 5.3 Codex High | 26 | 34 | $20/mo · ~9% daily cap/feature ‡ | ~16m |
-| **Viable** | GPT 5.3 Codex Low | 25 | 33 | $20/mo · <5% daily cap/feature ‡ | ~10m |
-| **Viable** | Claude Haiku 4.5 | 25 | 31 | $10/mo · ~$0.01/prompt † | ~14m |
-| **Viable** | Kimi K2.5 | 29 | 29 | ~$1.84 | ~7m |
-| **Viable** | MiniMax M2.5 | 27 | 28 | ~$0.26 | ~14m |
-| **Not recommended** | Devstral (cloud) | 26 | 25 | free* | ~28m |
-| **Not recommended** | All local models | 9-14 | 5-13 | free | 18-54m |
-| **Not recommended** | Qwen Turbo, DeepSeek-V3.2 | 8-12 | 4-8 | <$0.60 | 12m+ |
+| Tier | Models | Hosted by | Plan | Impl | Cost per feature | Time |
+|------|--------|-----------|:----:|:----:|:----------------:|:----:|
+| **Recommended** | Claude Sonnet 4.6 | GitHub Copilot | 35 | 34 | $10/mo · ~$0.07/feature † | ~12m |
+| **Recommended** | Claude Opus 4.6 | GitHub Copilot | 36 | 32 | $10/mo · ~$0.20/feature † | ~15m |
+| **Recommended** | GPT 5.4 | GitHub Copilot | 30 | 37 | $10/mo · ~$0.07/feature † | ~10m |
+| **Strong alternative** | GLM 4.7 | Requesty | 34 | 34 | ~$2.71 | ~15m |
+| **Viable** | GPT 5.4 | ChatGPT Plus | 29 | 35 | $20/mo · ~$0.05/feature ‡ | ~10m |
+| **Viable** | GPT 5.3 Codex | ChatGPT Plus | 30 | 34 | $20/mo · ~$0.05/feature ‡ | ~11m |
+| **Viable** | GPT 5.3 Codex Extra-High | ChatGPT Plus | 31 | 34 | $20/mo · ~$0.10/feature ‡ | ~23m |
+| **Viable** | GPT 5.3 Codex High | ChatGPT Plus | 26 | 34 | $20/mo · ~$0.05/feature ‡ | ~16m |
+| **Viable** | GPT 5.3 Codex Low | ChatGPT Plus | 25 | 33 | $20/mo · ~$0.03/feature ‡ | ~10m |
+| **Viable** | Claude Haiku 4.5 | GitHub Copilot | 25 | 31 | $10/mo · ~$0.02/feature † | ~14m |
+| **Viable** | Kimi K2.5 | Requesty | 30 | 29 | ~$1.84 | ~7m |
+| **Viable** | MiniMax M2.5 | Requesty | 27 | 28 | ~$0.26 | ~14m |
+| **Not recommended** | Devstral | Requesty | 26 | 25 | free* | ~28m |
+| **Not recommended** | All local models | Local | 9-14 | 5-13 | free | 18-54m |
+| **Not recommended** | Qwen Turbo, DeepSeek-V3.2 | Requesty | 8-12 | 4-8 | <$0.60 | 12m+ |
 
 > † GitHub Copilot Pro ($10/month) includes 300 premium requests. Haiku costs 0.33 requests (~$0.01); Sonnet and GPT 5.4 cost 1 request each (~$0.03); Opus costs 3 requests (~$0.09). A same-model two-prompt workflow costs about ~$0.02 for Haiku, ~$0.07 for Sonnet or GPT 5.4, and ~$0.20 for Opus. Additional requests are $0.04 each.
 >
-> ‡ ChatGPT Plus ($20/month) uses daily and weekly caps rather than token pricing. For the planning runs here, GPT 5.4, GPT 5.3 Codex, and GPT 5.3 Codex High each used ~1% daily cap; GPT 5.3 Codex Extra-High used ~2% daily cap. Feature-level percentages combine plan + implementation.
->
-> ‡‡ GPT 5.3 Codex Low planning used less than 1% of the daily cap.
+> ‡ ChatGPT Plus ($20/month) is the subscription that provides access to GPT 5.4 and the GPT 5.3 Codex model family (OpenAI's coding-optimised model line, also branded as the "Codex" feature in ChatGPT). It uses daily and weekly usage caps rather than token pricing. Estimated costs are derived from cap percentages (plan + implementation combined). See [ChatGPT Plus details](#cloud-via-openais-chatgpt-plus-subscription) for daily/weekly cap breakdown.
 >
 > \* Devstral was free when the evaluation started. Requesty changed this during the evaluation.
 >
@@ -70,7 +68,7 @@ To answer the question: **Which LLMs are well suited for a hobby programmer usin
 The evaluation focuses on:
 
 - **Local models** — run entirely on-device via LM Studio (no API costs, private, but limited by hardware)
-- **Cloud models** — accessed via GitHub Copilot and [Requesty](https://requesty.ai) (API costs apply, more capable)
+- **Cloud models** — accessed via GitHub Copilot, ChatGPT (subscription based) and [Requesty](https://requesty.ai) (pay-per-use)
 
 The task is a realistic feature request in a non-trivial Spring Boot codebase with strict architectural rules defined in `AGENTS.md`.
 
@@ -84,7 +82,7 @@ The task is a realistic feature request in a non-trivial Spring Boot codebase wi
 
 **Local model runtime**: LM Studio
 
-**Cloud access**: GitHub Copilot (Claude and GPT models) and Requesty (various providers)
+**Cloud access**: GitHub Copilot, ChatGPT and Requesty
 
 ---
 
@@ -187,40 +185,35 @@ Each model consumes a different number of premium requests per prompt:
 | Claude Opus 4.6 | 3 |
 | GPT 5.4 | 1 |
 
-### Cloud via ChatGPT Plus (subscription)
+### Cloud via ChatGPT Plus subscription
 
-[ChatGPT Plus](https://openai.com/chatgpt/pricing/) costs $20/month and includes access to GPT 5.3 Codex at multiple thinking levels. 
+[ChatGPT Plus](https://openai.com/chatgpt/pricing/) costs $20/month and includes access to GPT models at multiple thinking levels. 
 Unlike token-based pricing, ChatGPT Plus uses **daily and weekly usage caps** — each task consumes a percentage of your daily/weekly budget.
 
-| Model | Thinking | Daily cap per task | Weekly cap per task | Est. cost per task |
-|-------|--------|:------------------:|:-------------------:|:------------------:|
-| GPT 5.3 Codex | Default | 6% | 2% | ~$0.04 |
-| GPT 5.3 Codex Low | Low | 4% | 1% | ~$0.02 |
-| GPT 5.3 Codex High | High | 8% | 2% | ~$0.04 |
-| GPT 5.3 Codex Extra-High | Extra-High | 12% | 4% | ~$0.08 |
+| Model | Thinking | Plan cap (daily) | Impl cap (daily) | Est. cost/feature | Plan / Impl |
+|-------|----------|:----------------:|:-----------------:|:-----------------:|:-----------:|
+| GPT 5.4 | Default | ~1% | ~7% | ~$0.05 | 29 / 35 |
+| GPT 5.3 Codex | Default | ~1% | 6% | ~$0.05 | 30 / 34 |
+| GPT 5.3 Codex | Low | <1% | 4% | ~$0.03 | 25 / 33 |
+| GPT 5.3 Codex | High | ~1% | 8% | ~$0.05 | 26 / 34 |
+| GPT 5.3 Codex | Extra-High | ~2% | 12% | ~$0.10 | 31 / 34 |
 
-**Cost calculation**: Estimated cost per task uses the weekly cap as the binding constraint.
+**Cost calculation**: Estimated cost per feature combines plan + implementation and uses the weekly cap as the binding constraint. 
 Based on the numbers per task, the weekly limit will be hit after hitting the daily cap ~4 times in a row.
 
-**Impact for hobby coders**: The daily cap matters most. 
-At the default thinking level (6% daily), you can run ~16 implementation tasks per day. 
-The weekly cap (2% = 50 tasks/week) only becomes binding if you consistently code every day. 
+**Impact for hobby coders**: The daily cap is the practical constraint. 
+At the default thinking level (6-7% daily for implementation), you can run ~14-16 implementation tasks per day. 
+The weekly cap only becomes binding if you consistently code every day. 
 At extra-high thinking (12% daily), you're limited to ~8 tasks per day, which may feel constraining during intense development sessions.
 
-For the planning runs in this evaluation:
-- **GPT 5.3 Codex** used ~1% daily cap
-- **GPT 5.3 Codex Low** used <1% daily cap
-- **GPT 5.3 Codex High** used ~1% daily cap
-- **GPT 5.3 Codex Extra-High** used ~2% daily cap
-- **GPT 5.4** used ~1% daily cap
-
-Weekly usage stayed below 1% for all GPT planning runs.
+**Note**: GPT 5.4 Extra-High thinking was tested for planning only (29/40) — it matched the default GPT 5.4 result at 4× the time and 2× the daily cap cost, confirming that higher thinking does not improve planning for our case.
 
 ### Cloud via Requesty (pay-per-use)
 
 [Requesty](https://www.requesty.ai/) is a gateway to different LLM providers similar to [OpenRouter](https://openrouter.ai/).
 Requesty was picked to fulfill the side goal of finding an European alternative to OpenRouter.
-The pricing is based on input and output tokens. The table below shows the **actual cost observed per evaluation run** (planning + implementation) rather than raw token prices.
+The pricing is based on input and output tokens. 
+The table below shows the **actual cost observed per evaluation run** (planning + implementation) rather than raw token prices.
 
 | Model | Provider | Planning cost | Implementation cost | Total per feature |
 |-------|----------|:-------------:|:-------------------:|:-----------------:|
@@ -257,19 +250,19 @@ The planning prompt asked each model to produce a structured implementation plan
 
 | Model | Type | Time | Cost | Plan Score |
 |-------|------|------|------|:----------:|
-| **Claude Opus 4.6** | GitHub Copilot | 3m 8s | subscription | **36/40** |
-| **Claude Sonnet 4.6** | GitHub Copilot | 2m 23s | subscription | **35/40** |
+| **Claude Opus 4.6** | GitHub Copilot | 3m 8s | ~$0.09 † | **36/40** |
+| **Claude Sonnet 4.6** | GitHub Copilot | 2m 23s | ~$0.03 † | **35/40** |
 | **GLM 4.7** | Requesty | 2m 57s | ~$0.25 | **34/40** |
-| **GPT 5.4 (GitHub Copilot)** | GitHub Copilot | 45s | subscription | **30/40** |
-| **GPT 5.3 Codex** | ChatGPT Plus | 1m 10s | ~1% daily cap | **30/40** |
-| **GPT 5.4 (ChatGPT)** | ChatGPT Plus | 42s | ~1% daily cap | **29/40** |
-| **GPT 5.3 Codex Extra-High** | ChatGPT Plus | 2m 37s | ~2% daily cap | **29/40** |
-| **Kimi K2.5** | Requesty | 35s | ~$0.10 | **29/40** |
+| **GPT 5.3 Codex Extra-High** | ChatGPT Plus | 2m 37s | ~$0.02 ‡ | **31/40** |
+| **GPT 5.4 (GitHub Copilot)** | GitHub Copilot | 45s | ~$0.03 † | **30/40** |
+| **GPT 5.3 Codex** | ChatGPT Plus | 1m 10s | ~$0.01 ‡ | **30/40** |
+| **Kimi K2.5** | Requesty | 35s | ~$0.10 | **30/40** |
+| **GPT 5.4 (ChatGPT)** | ChatGPT Plus | 42s | ~$0.01 ‡ | **29/40** |
 | **MiniMax M2.5** | Requesty | 1m 37s | ~$0.02 | **27/40** |
-| **GPT 5.3 Codex High** | ChatGPT Plus | 1m 56s | ~1% daily cap | **26/40** |
-| **GPT 5.3 Codex Low** | ChatGPT Plus | 43s | <1% daily cap | **25/40** |
+| **GPT 5.3 Codex High** | ChatGPT Plus | 1m 56s | ~$0.01 ‡ | **26/40** |
 | **Devstral** | Requesty | 17s | ~$0.01 | **26/40** |
-| **Claude Haiku 4.5** *(baseline)* | GitHub Copilot | 35s | subscription | **25/40** |
+| **GPT 5.3 Codex Low** | ChatGPT Plus | 43s | <$0.01 ‡ | **25/40** |
+| **Claude Haiku 4.5** *(baseline)* | GitHub Copilot | 35s | ~$0.01 † | **25/40** |
 | **Nemotron 3 Nano 30B** | Local | 1m 42s | free | **14/40** |
 | **DeepSeek-V3.2** | Requesty | 42s | $0.05 | **12/40** |
 | **Devstral Small 2** | Local | 1m 28s | free | **12/40** |
@@ -278,13 +271,11 @@ The planning prompt asked each model to produce a structured implementation plan
 
 ### Key Takeaways — Planning
 
-- **Opus and Sonnet still dominate planning**: Both remain clearly ahead on codebase fit, architectural reasoning, and implementation-ready detail.
-- **The new GPT plans land in the middle tier**: GPT 5.4 (Copilot) and GPT 5.3 Codex score 30/40, while GPT 5.4 (ChatGPT) lands at 29/40 — useful plans, but still less codebase-specific than the top three.
-- **GPT 5.3 Codex Low falls back to baseline level**: At 25/40 it matches the Haiku baseline rather than the stronger GPT planning runs, despite being very fast and cheap.
-- **GPT planning is fast but less grounded in project conventions**: The GPT plans are quick to produce, but most skip explicit keyset pagination, `PageResult`, and DTO-owned mapping guidance.
-- **GLM 4.7 is the best pay-per-use planner** at ~$0.25, providing the most complete Java code examples and the only plan to include `@EntityGraph` for N+1 prevention.
-- **A significant gap separates cloud from local for this workflow**: The best local plan (Nemotron, 14/40) scores below even the weakest cloud plan baseline (Haiku, 25/40). For a task with this level of context and architectural constraints, local models consistently miss SQL schemas, `@Configuration` wiring, JSON model tests, and GDPR logging.
-- **DeepSeek invented requirements** (optimistic locking, soft deletes) that would derail implementation — a model that adds scope unprompted is risky for structured workflows.
+**Top tier (34-36/40) — Claude + GLM**: Opus (36) and Sonnet (35) remain clearly ahead on codebase fit, architectural reasoning, and implementation-ready detail. Only Opus and Sonnet explicitly address both DTO mapping directions with concrete code: incoming `toEntity()` on the DTO and an outgoing controller `toDto()` helper — and both do so without any DTO leaking into the service layer. GLM 4.7 (34, ~$0.25) is the best pay-per-use planner — the most complete Java code examples and the only plan to include `@EntityGraph` for N+1 prevention.
+
+**Middle tier (25-31/40) — GPT models**: GPT plans are fast but less grounded in project conventions — most skip keyset pagination, `PageResult`, and DTO-owned `toEntity()` mapping. GPT 5.3 Codex Extra-High (31) edges ahead with the most schema-specific migration; GPT 5.4 Copilot and GPT 5.3 Codex Default both score 30; GPT 5.4 (ChatGPT) scores 29 — GPT 5.4 Extra-High matched this exactly at 4× the time, confirming higher thinking does not improve GPT 5.4 planning. GPT 5.3 Codex Low (25) drops to the Haiku baseline.
+
+**Not viable (≤14/40) — Local and weak cloud**: The best local plan (Nemotron, 14) falls below even the weakest cloud baseline (Haiku, 25). Local models consistently miss SQL schemas, `@Configuration` wiring, JSON model tests, and GDPR logging. DeepSeek invented requirements (optimistic locking, soft deletes) that would derail implementation.
 
 > See [`devices-plan-evaluation.md`](devices-plan-evaluation.md) for detailed per-model analysis and scoring breakdown.
 
@@ -296,16 +287,16 @@ All models implemented the feature using the Claude Haiku 4.5 plan as a shared b
 
 | Model | Type | Time | Cost | Impl Score |
 |-------|------|------|------|:----------:|
-| **GPT 5.4 (Copilot)** | GitHub Copilot | 9m | subscription | **37/40** |
-| **GPT 5.4 (ChatGPT)** | ChatGPT Plus | 9m | ~$0.04/task | **35/40** |
-| **Claude Sonnet 4.6** | GitHub Copilot | 10m | subscription | **34/40** |
+| **GPT 5.4 (Copilot)** | GitHub Copilot | 9m | ~$0.03 † | **37/40** |
+| **GPT 5.4 (ChatGPT)** | ChatGPT Plus | 9m | ~$0.04 ‡ | **35/40** |
+| **Claude Sonnet 4.6** | GitHub Copilot | 10m | ~$0.03 † | **34/40** |
 | **GLM 4.7** | Requesty | 12m | ~$2.46 | **34/40** |
-| **GPT 5.3 Codex Extra-High** | ChatGPT Plus | 20m | ~$0.08/task | **34/40** |
-| **GPT 5.3 Codex** | ChatGPT Plus | 10m | ~$0.04/task | **34/40** |
-| **GPT 5.3 Codex High** | ChatGPT Plus | 14m | ~$0.04/task | **34/40** |
-| **GPT 5.3 Codex Low** | ChatGPT Plus | 9m | ~$0.02/task | **33/40** |
-| **Claude Opus 4.6** | GitHub Copilot | 12m | subscription | **32/40** |
-| **Claude Haiku 4.5** | GitHub Copilot | 13m | subscription | **31/40** |
+| **GPT 5.3 Codex Extra-High** | ChatGPT Plus | 20m | ~$0.08 ‡ | **34/40** |
+| **GPT 5.3 Codex** | ChatGPT Plus | 10m | ~$0.04 ‡ | **34/40** |
+| **GPT 5.3 Codex High** | ChatGPT Plus | 14m | ~$0.04 ‡ | **34/40** |
+| **GPT 5.3 Codex Low** | ChatGPT Plus | 9m | ~$0.02 ‡ | **33/40** |
+| **Claude Opus 4.6** | GitHub Copilot | 12m | ~$0.09 † | **32/40** |
+| **Claude Haiku 4.5** | GitHub Copilot | 13m | ~$0.01 † | **31/40** |
 | **Kimi K2.5** | Requesty | 6m | ~$1.74 | **29/40** |
 | **MiniMax M2.5** | Requesty | 12m | ~$0.24 | **28/40** |
 | **Devstral** | Requesty | 28m | free* | **25/40** |
@@ -317,11 +308,10 @@ All models implemented the feature using the Claude Haiku 4.5 plan as a shared b
 
 ### Key Takeaways — Implementation
 
-- **GPT 5.4 (Copilot) is the top scorer at 37/40** — strongest overall implementation quality, richest JPA model, full sensor details, and complete tests in 9 minutes.
-- **GPT 5.4 (ChatGPT) is close behind at 35/40** — very similar output quality, but weaker on layering and ID generation; Copilot remains the better value due to lower cost and no usage caps.
+- **GPT 5.4 leads implementation at 35-37/40** — 37/40 on Copilot, 35/40 on ChatGPT. The score difference is likely non-deterministic; the pick should be on pricing — Copilot Pro at $10/mo with no usage caps vs. ChatGPT Plus at $20/mo with daily/weekly caps.
 - **Sonnet is the cleanest architectural implementation at 34/40** — the only model that validates cross-feature sensors through `SensorService` as required by the layering rules.
 - **GLM 4.7 is the best pay-per-use implementation at 34/40** — strong JPA graph traversal and rich sensor responses, but weaker on test reliability and DTO mapping placement.
-- **GPT 5.3 Codex variants form a strong middle cluster** — Default, High, and Extra-High all land at 34/40, so higher thinking levels bring little implementation benefit.
+- **GPT 5.3 Codex variants form a strong middle cluster** — Default, High, and Extra-High all land at 34/40, so higher thinking levels bring little implementation benefit. The score differences between GPT 5.3 Codex on ChatGPT and GPT 5.4 on Copilot are likely non-deterministic as well — pick based on pricing.
 - **Haiku and Kimi are workable but flawed** — Haiku returns empty sensor lists despite the relationship being present, while Kimi ships a serious `findAll().stream().filter()` performance bug.
 - **Local models are not viable for this workflow** — the best local implementation scored 13/40 and still failed to produce a complete working feature.
 
@@ -348,9 +338,9 @@ Time measured is wall-clock time from prompt submission to completion, including
 | Medium | Devstral Small 2 (local) | 1m 28s | Slow for a local model |
 | Medium | MiniMax M2.5 | 1m 37s | Decent speed for the quality |
 | Medium | Nemotron 3 Nano (local) | 1m 42s | Slow with mediocre output |
-| Medium | GPT 5.3 Codex High | 1m 56s | Lower planning quality than default (26/40) |
+| Medium | GPT 5.3 Codex High | 1m 56s | Lower planning quality than default thinking level (26/40) |
 | Slow | Claude Sonnet 4.6 | 2m 23s | Worth the wait (35/40) |
-| Slow | GPT 5.3 Codex Extra-High | 2m 37s | More time, weaker plan than default (29/40) |
+| Slow | GPT 5.3 Codex Extra-High | 2m 37s | Best schema detail of any GPT plan but expensive at 2× daily cap (31/40) |
 | Slow | GPT-OSS Safeguard (local) | 2m 41s | Slowest for worst result (9/40) |
 | Slow | GLM 4.7 | 2m 57s | Worth the wait (34/40) |
 | Slow | Claude Opus 4.6 | 3m 8s | Slowest, but best plan (36/40) |
@@ -370,38 +360,32 @@ Time measured is wall-clock time from prompt submission to completion, including
 | Medium | MiniMax M2.5 | 12m | Decent for the low cost |
 | Medium | Qwen Turbo | 12m | 12 minutes wasted (4/40) |
 | Medium | Claude Haiku 4.5 | 13m | Needed a follow-up prompt |
-| Medium | GPT 5.3 Codex High | 14m | Same score as default, 40% slower |
+| Medium | GPT 5.3 Codex High | 14m | Same score as default thinking, 40% slower |
 | Slow | GPT-OSS Safeguard (local) | 18m | Needed constant prompting |
-| Slow | GPT 5.3 Codex Extra-High | 20m | Same score as default for double the time |
+| Slow | GPT 5.3 Codex Extra-High | 20m | Same score as default thinking for double the time |
 | Slow | Devstral | 28m | Too slow for the quality |
 | Very slow | Devstral Small 2 (local) | 54m | Nearly an hour for an incomplete result |
 | Very slow | Nemotron 3 Nano (local) | 54m | Nearly an hour, stopped on its own |
 
 ### Best time-to-quality ratio
 
-For a complete plan + implementation cycle:
+For a complete plan + implementation cycle, including model combinations across access paths:
 
-| Model | Total time | Combined score | Cost |
-|-------|:----------:|:--------------:|:----:|
-| Claude Sonnet 4.6 | ~12m | 69/80 | subscription |
-| GPT 5.4 (Copilot) | ~10m | 67/80 | subscription |
-| GLM 4.7 | ~15m | 68/80 | ~$2.71 |
-| GPT 5.4 (ChatGPT) | ~10m | 64/80 | subscription |
-| GPT 5.3 Codex | ~11m | 64/80 | subscription |
-| GPT 5.3 Codex Low | ~10m | 58/80 | subscription |
-| Kimi K2.5 | ~6m | 58/80 | ~$1.84 |
-| Claude Haiku 4.5 | ~14m | 56/80 | subscription |
+| Workflow (Plan, Implement) | Total time | Combined score | Est. cost/feature | Access |
+|----------------------------|:----------:|:--------------:|:-----------------:|--------|
+| Opus → GPT 5.4 | ~12m | 73/80 | ~$0.12 † | Copilot |
+| Sonnet → GPT 5.4 | ~12m | 72/80 | ~$0.07 † | Copilot |
+| Sonnet → Sonnet | ~12m | 69/80 | ~$0.07 † | Copilot |
+| GLM 4.7 → GLM 4.7 | ~15m | 68/80 | ~$2.71 | Requesty |
+| GPT 5.4 → GPT 5.4 | ~10m | 67/80 | ~$0.07 † | Copilot |
+| GPT 5.4 → GPT 5.4 | ~10m | 64/80 | ~$0.05 ‡ | ChatGPT |
+| GPT 5.3 Codex → GPT 5.3 Codex | ~11m | 64/80 | ~$0.05 ‡ | ChatGPT |
+| GLM 4.7 → MiniMax M2.5 | ~15m | 62/80 | ~$0.49 | Requesty |
+| Kimi K2.5 → Kimi K2.5 | ~7m | 59/80 | ~$1.84 | Requesty |
+| Haiku → Haiku | ~14m | 56/80 | ~$0.02 † | Copilot |
 
-For GPT workflows:
-
-| Model | Plan + Impl time | Combined score | Cost |
-|-------|:----------------:|:--------------:|:----:|
-| GPT 5.4 (Copilot) | ~10m | 67/80 | subscription ($10/mo) |
-| GPT 5.4 (ChatGPT) | ~10m | 64/80 | subscription ($20/mo) |
-| GPT 5.3 Codex | ~11m | 64/80 | subscription ($20/mo) |
-| GPT 5.3 Codex Extra-High | ~23m | 63/80 | subscription ($20/mo) |
-| GPT 5.3 Codex High | ~16m | 60/80 | subscription ($20/mo) |
-| GPT 5.3 Codex Low | ~10m | 58/80 | subscription ($20/mo) |
+GPT models are available on both Copilot and ChatGPT. 
+Since all GPT models are also accessible through Copilot (at lower cost and without usage caps), the ChatGPT rows are mainly relevant if you spend many prompts on planning or already subscribe for other ChatGPT features.
 
 ---
 
@@ -409,19 +393,40 @@ For GPT workflows:
 
 ### Subscription vs. Pay-Per-Use: When Does Each Make Sense?
 
-The key question for hobby coders: **is a GitHub Copilot subscription worth it, or should you pay per use via Requesty?**
+The key question for hobby coders: **which access path offers the best value — GitHub Copilot, ChatGPT Plus, or pay-per-use via Requesty?**
+
+#### GitHub Copilot vs. ChatGPT Plus — Platform Comparison
+
+Both are subscription services, but they differ significantly in model access, pricing structure, and value for coding:
+
+| | GitHub Copilot Pro ($10/mo) | ChatGPT Plus ($20/mo) |
+|---|---|---|
+| **Model families** | Claude (Haiku, Sonnet, Opus) + GPT (5.4) + others | OpenAI models only (GPT 5.4, 5.3 Codex) |
+| **Pricing model** | Premium requests (300/mo, ~$0.03 each) | Daily/weekly usage caps |
+| **Usage limits** | No daily/weekly caps; only total request count | Daily cap (~14-16 impl tasks/day at default) |
+| **Best planning** | Claude Sonnet 35/40, Opus 36/40 | GPT 5.3 Codex Extra-High 31/40 |
+| **Best implementation** | GPT 5.4 37/40, Sonnet 34/40 | GPT 5.4 35/40, GPT 5.3 Codex 34/40 |
+| **Monthly cost** | $10 | $20 |
+
+**Key differences for coding workflows**:
+- **Copilot's main advantage is Claude access for planning** — Sonnet (35/40) and Opus (36/40) significantly outperform all GPT planning results (25-31/40). ChatGPT has no equivalent.
+- **Implementation costs are similar** — GPT 5.4 costs ~$0.03 on Copilot vs. ~$0.04 on ChatGPT per task, but Copilot has no daily caps.
+- **ChatGPT can have cheaper planning per task** (~$0.01 vs. ~$0.03 for Copilot Sonnet), but the $20/mo base fee is double and GPT planning quality is lower. This only pays off if you already subscribe for non-coding ChatGPT features.
+- **Copilot is the better dedicated coding subscription** — half the cost, higher combined quality, no usage caps, and access to both Claude and GPT model families.
 
 #### GitHub Copilot Pro ($10/month)
 
 GitHub Copilot Pro costs $10/month and includes **300 premium requests**.
 Each request costs $10 / 300 = **\~$0.033**.
+The amount of requests consumed depend on the [model](https://docs.github.com/en/copilot/concepts/billing/copilot-requests#model-multipliers).
 Haiku consumes **0.33 requests** per prompt (~$0.01); Sonnet and GPT 5.4 consume **1 request** (~$0.03); Opus consumes **3 requests** (~$0.09).
 This evaluation used **2 prompts per feature** (plan + implementation).
 
 | Workflow | Requests per feature | Cost per feature |
 |----------|:--------------------:|:----------------:|
-| Sonnet plan + Sonnet impl | 2 | ~$0.07 |
-| Opus plan + Sonnet impl | 4 | ~$0.13 |
+| Opus plan + GPT 5.4 impl | 4 | ~$0.12 |
+| Sonnet plan + GPT 5.4 impl | 2 | ~$0.06 |
+| Opus plan + Haiku impl | 3.33| ~$0.10 |
 | Haiku plan + Haiku impl | 0.66 | ~$0.02 |
 
 Additional requests beyond 300 are billed at **$0.04 each**.
@@ -436,16 +441,16 @@ Below that number, pay-per-use is cheaper; above it, the subscription wins.
 
 | Comparison | Copilot Pro cost/feature | Requesty cost/feature | Break-even |
 |------------|:------------------------:|:---------------------:|:----------:|
-| Sonnet vs GLM 4.7 | ~$0.07 | ~$2.71 | **~4 features** |
-| Sonnet vs GLM plan + MiniMax impl | ~$0.07 | ~$0.49 | **~24 features** |
-| Sonnet vs MiniMax M2.5 | ~$0.07 | ~$0.26 | **~53 features** |
+| Opus plan + GPT 5.4 impl vs GLM 4.7 | ~$0.12 | ~$2.71 | **~4 features** |
+| Opus plan + GPT 5.4 impl vs GLM plan + MiniMax impl | ~$0.12 | ~$0.49 | **~21 features** |
+| Opus plan + GPT 5.4 impl vs MiniMax M2.5 | ~$0.12 | ~$0.26 | **~39 features** |
 
 **Bottom line**: If you implement more than ~4 features per month using GLM 4.7, a **Copilot Pro subscription is cheaper** — and delivers higher-quality results.
 For most hobby coders doing any regular development, that threshold is trivial to cross.
 
 #### When Pay-Per-Use Makes Sense
 
-- You code infrequently (fewer than ~10 features per month)
+- You code infrequently
 - You want to avoid a recurring subscription
 - You prefer a European provider (Requesty routes through Nebius for some models)
 - You want to experiment with different models without commitment
@@ -453,29 +458,31 @@ For most hobby coders doing any regular development, that threshold is trivial t
 #### GitHub Copilot Pro+ ($39/month)
 
 Pro+ costs $39/month and includes 1,500 premium requests (~$0.026/request).
-At 2 requests/feature with Sonnet, that covers up to 750 features/month.
-**Only consider Pro+ if you heavily use Opus** (3 requests/prompt) or need access to additional models — Pro is sufficient for Sonnet-based workflows.
+At 4 requests/feature with Opus + GPT 5.4, that covers up to 325 features/month.
+**Only consider Pro+ if you heavily use Opus** (3 requests/prompt) and prompt a lot on daily basis.
 
-#### ChatGPT Plus ($20/month) — GPT 5.3 Codex
+#### ChatGPT Plus ($20/month)
 
 ChatGPT Plus costs $20/month and provides access to GPT 5.4 and 5.3 Codex. 
 Unlike token-based or request-based pricing, ChatGPT Plus uses **daily and weekly usage caps** — each task consumes a percentage of your budget.
 
-| Model | Thinking level | Daily cap/task | Tasks/day | Est. cost/task | Plan / Impl |
-|-----------|:--------------:|:--------------:|:---------:|:--------------:|:-----------:|
-| 5.3 Codex | Low | 4% impl, <1% plan | ~25 impl | ~$0.02 | 25 / 33 |
-| 5.3 Codex | Default | 6% impl, ~1% plan | ~16 impl | ~$0.04 | 30 / 34 |
-| 5.3 Codex | High | 8% impl, ~1% plan | ~12 impl | ~$0.04 | 26 / 34 |
-| 5.3 Codex | Extra-High | 12% impl, ~2% plan | ~8 impl | ~$0.08 | 29 / 34 |
-| 5.4       | Default | 7% impl, ~1% plan | ~14 impl |  ~$0.04 | 29 / 35 |
+| Model | Thinking | Est. cost/feature | Impl tasks/day | Plan / Impl |
+|-------|----------|:-----------------:|:--------------:|:-----------:|
+| GPT 5.4 | Default | ~$0.05 | ~14 | 29 / 35 |
+| GPT 5.3 Codex | Low | ~$0.03 | ~25 | 25 / 33 |
+| GPT 5.3 Codex | Default | ~$0.05 | ~16 | 30 / 34 |
+| GPT 5.3 Codex | High | ~$0.05 | ~12 | 26 / 34 |
+| GPT 5.3 Codex | Extra-High | ~$0.10 | ~8 | 31 / 34 |
 
-**Key insight for hobby coders**: The daily cap is the practical constraint. At the default thinking level, ~16 tasks per day is ample for hobby coding. The weekly cap (e.g., 2% = 50 tasks/week) only matters if you code intensively every day.
+**Key insight for hobby coders**: The daily cap is the practical constraint. At the default thinking level, ~14-16 tasks per day is ample for hobby coding. 
+The weekly cap only matters if you code intensively every day.
 
-**Diminishing returns on thinking**: For implementation, Default, High, and Extra-High all scored 34/40 while Low scored 33/40. Planning now shows a similar pattern: GPT 5.3 Codex Default (30/40) outperformed High (26/40) and Extra-High (29/40). **The default thinking level is the best value overall** for GPT 5.3 Codex in this workflow.
+**Diminishing returns on thinking**: For implementation, Default, High, and Extra-High all scored 34/40 while Low scored 33/40. For planning, Extra-High (31/40) edges out Default (30/40) but at 2× the daily cap cost. GPT 5.4 Extra-High planning matched the default GPT 5.4 result (29/40) at 4× the time — **the default thinking level is the best value overall**.
 
-**ChatGPT Plus vs. GitHub Copilot Pro**: GPT 5.4 on Copilot Pro now leads both on combined quality and on implementation quality — 30/40 planning and 37/40 implementation versus 29/40 and 35/40 for GPT 5.4 via ChatGPT. On top of higher scores, Copilot Pro costs half as much ($10/mo vs. $20/mo) and has no daily or weekly usage caps. For dedicated coding, Copilot Pro is the better GPT access path.
+**ChatGPT Plus vs. GitHub Copilot Pro**: Copilot Pro costs half as much ($10/mo vs. $20/mo), has no daily or weekly usage caps, and provides access to Claude models for planning (which score 35-36/40 vs. GPT's 29-31/40).
+The score differences between GPT 5.4 on Copilot (37/40 impl) and ChatGPT (35/40 impl) are likely non-deterministic — the pick should be on pricing and platform features.
 
-**GPT 5.4 across access paths**: The GitHub Copilot run produced the better overall result: 30/40 planning and 37/40 implementation, versus 29/40 and 35/40 via ChatGPT Plus. The gap is small in planning and modest in implementation, but it consistently favors Copilot while also avoiding usage caps.
+**ChatGPT Plus has one practical advantage for planning-heavy workflows**: at ~1% daily cap per planning prompt, you can run ~100 planning prompts per day essentially for free within the subscription — making it well-suited for iterative, interactive planning sessions with many back-and-forth prompts. On Copilot, each GPT 5.4 planning prompt costs 1 premium request (~$0.03), so an interactive session with 10+ prompts visibly erodes the 300-request monthly budget. If your workflow involves extended planning conversations rather than a single-shot plan, ChatGPT Plus removes that friction at the cost of lower planning quality (29-31/40 vs. 35-36/40 on Copilot with Claude).
 
 **Note**: GPT 5.4 requires OpenCode 1.3 or later.
 
@@ -493,27 +500,28 @@ With Opus consuming three times more credits, it is worth to stick with Sonnet f
 
 For pay-per-use, **GLM 4.7** is the best cloud planner at ~$0.25 per plan (34/40), with detailed Java code examples and a rich test plan.
 
-The new GPT planning runs are usable but clearly second tier: **GPT 5.4 (Copilot)** and **GPT 5.3 Codex** both scored 30/40, **GPT 5.4 (ChatGPT)** scored 29/40, and the higher GPT 5.3 thinking levels performed worse rather than better. The common pattern is sensible structure but weaker codebase fit, especially around keyset pagination, `PageResult`, and explicit DTO-owned mapping guidance.
-
 ### Implementation: GPT 5.4 or Claude Sonnet 4.6 (GitHub Copilot)
 
-**GPT 5.4** is the top implementation scorer at 37/40 — the richest JPA model, full sensor details, DTO-owned transformation, comprehensive tests, and completes in ~9 minutes on a flat subscription.
+**GPT 5.4** scored 35-37/40 across access paths (37 on Copilot, 35 on ChatGPT) — the richest JPA model, full sensor details, DTO-owned transformation, comprehensive tests, and completes in ~9 minutes. 
+The score difference between Copilot and ChatGPT is likely non-deterministic; pick based on pricing (Copilot at $10/mo vs. ChatGPT at $20/mo with usage caps).
 
-**Sonnet 4.6** scores 34/40 and is the only model that correctly used `SensorService` for cross-feature validation — the architecturally cleanest implementation. It completes in ~10 minutes on the same subscription.
+**Sonnet 4.6** scores 34/40 and is the only model that correctly used `SensorService` for cross-feature validation — the architecturally cleanest implementation. 
+It completes in ~10 minutes on the same Copilot subscription.
 
-**GPT 5.4 (Copilot)** (37/40) is the best choice when raw implementation quality is the priority. The same model via ChatGPT Plus scored 35/40 — effectively the same quality tier, but subject to daily/weekly usage caps and at double the subscription cost. GitHub Copilot is recommended over ChatGPT Plus for this workflow. **Sonnet 4.6** (34/40) is better when architectural correctness and layering compliance matter most.
-
-For pay-per-use implementation, **GLM 4.7** (~$2.46, 34/40) is the best non-subscription option. Note that GLM used controller-side DTO transformation (inline field extraction in `toDto()`) rather than the preferred DTO-owned `from()` factory approach.
+For pay-per-use implementation, **GLM 4.7** (~$2.46, 34/40) is the best non-subscription option. 
 
 ### Recommended Setup
 
 **Subscription (GitHub Copilot Pro — $10/month):**
 Use **Opus 4.6** or **Sonnet 4.6** to produce the plan, review and adjust it, then use **GPT 5.4** or **Sonnet 4.6** to implement. 
 You get 300 premium requests/month, enough for ~75-150 features depending on model choice.
-**GPT 5.4** (30/40 plan, 37/40 implementation) is the best GPT option overall on Copilot; **Sonnet 4.6** (35/40 plan, 34/40 implementation) is the better single-model choice when architectural correctness matters most.
+**Sonnet 4.6** (35/40 plan, 34/40 implementation) is the better single-model choice when architectural correctness matters most.
 
 **ChatGPT Plus ($20/month):**
-GPT 5.3 Codex planning and implementation is respectable at the default thinking level (30/40 plan, 34/40 implementation), but still trails Copilot-based Claude planning and GPT 5.4 implementation. Low thinking is cheaper but drops to baseline planning quality (25/40), while High and Extra-High do not improve the outcome. **ChatGPT Plus is not recommended as a primary coding subscription** — it makes sense only if you already subscribe for other ChatGPT features and want coding as a bonus.
+GPT 5.3 Codex planning and implementation is respectable at the default thinking level (30/40 plan, 34/40 implementation), but still trails Copilot-based Claude planning and GPT 5.4 implementation. 
+Higher thinking levels show diminishing returns: Extra-High edges ahead in planning (31/40) but at 2× the daily cap, while Low drops to baseline quality (25/40). 
+**ChatGPT Plus is worth considering if your workflow involves iterative, interactive planning** — planning prompts cost only ~1% of the daily cap, so extended back-and-forth planning sessions are effectively unlimited within the subscription. 
+On Copilot, each Sonnet prompt costs 1 premium request, which adds up quickly in interactive sessions. The tradeoff is lower planning quality (29-31/40 vs. 35-36/40 with Claude on Copilot) and a higher base subscription cost ($20/mo vs. $10/mo).
 
 **Pay-per-use (Requesty):**
 Use **GLM 4.7** for planning (~$0.25) and implementation (~$2.46). 
@@ -531,7 +539,6 @@ Nemotron 3 Nano 30B (11/40) took 54 minutes and stopped without feedback. Gemma 
 
 ### Models to Avoid
 
-- **GPT 5.3 Codex Low/High/Extra-High thinking levels**: None beat the default thinking level overall. Low is cheapest but drops to 25/40 in planning; High and Extra-High both score worse than Default in planning and bring no implementation gain.
 - **Qwen Turbo**: Cheapest cloud option but consistently failed at tool calling — not usable for either role.
 - **DeepSeek-V3.2**: Aborted mid-implementation yet still cost ~$0.57 — poor value for any result.
 - **Gemini 3.1 Flash Lite**: Failed completely; unable to call tools consistently.
