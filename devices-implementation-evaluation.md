@@ -36,12 +36,12 @@ All scores are on a 1–10 scale.
 | Rank | Model | Completeness | Test Coverage | Compliance | Code Quality | **Total** |
 |------|-------|:------------:|:-------------:|:----------:|:------------:|:---------:|
 | 1 | GPT 5.4 (GitHub Copilot) | 10 | 9 | 9 | 9 | **37** |
-| 2 | Claude Sonnet 4.6 | 9 | 9 | 9 | 9 | **36** |
-| 3 | GPT 5.4 (ChatGPT) | 9 | 10 | 8 | 8 | **35** |
-| 3 | GLM 4.7 | 9 | 8 | 9 | 9 | **35** |
-| 5 | GPT 5.3 Codex Extra-High | 10 | 9 | 6 | 9 | **34** |
-| 5 | GPT 5.3 Codex | 9 | 9 | 8 | 8 | **34** |
-| 5 | GPT 5.3 Codex High | 9 | 9 | 8 | 8 | **34** |
+| 1 | Claude Sonnet 4.6 | 10 | 9 | 9 | 9 | **37** |
+| 3 | GPT 5.4 (ChatGPT) | 10 | 10 | 8 | 8 | **36** |
+| 3 | GPT 5.3 Codex | 9 | 10 | 9 | 8 | **36** |
+| 5 | GLM 4.7 | 9 | 8 | 9 | 9 | **35** |
+| 5 | GPT 5.3 Codex Extra-High | 10 | 9 | 7 | 9 | **35** |
+| 7 | GPT 5.3 Codex High | 9 | 9 | 8 | 8 | **34** |
 | 8 | GPT 5.3 Codex Low | 9 | 7 | 9 | 8 | **33** |
 | 9 | Claude Opus 4.6 | 8 | 8 | 8 | 8 | **32** |
 | 10 | Claude Haiku 4.5 | 8 | 8 | 7 | 8 | **31** |
@@ -55,8 +55,8 @@ All scores are on a 1–10 scale.
 
 ### Key Differences by Category
 
-- **Top scorer**: GPT 5.4 (GitHub Copilot) leads with the strongest overall balance of completeness, code quality, and test coverage. Its main trade-off is bypassing `SensorService` via `EntityManager.find(...)`.
-- **High-quality tier**: Claude Sonnet 4.6 ranks 2nd at 36/40 — the only model to correctly use `SensorService` for cross-feature validation, with strong completeness and clean compliance. GPT 5.4 (ChatGPT), GLM 4.7, and the GPT 5.3 Codex variants follow at 34–35/40. GLM is the strongest pay-per-use option with the richest JPA sensor graph; GPT 5.4 (ChatGPT) has the best JSON-model test coverage; the Codex variants are consistent but all bypass `SensorService`.
+- **Top scorers**: GPT 5.4 (GitHub Copilot) and Claude Sonnet 4.6 tie at 37/40. Copilot has the strongest completeness and JPA relationship mapping but bypasses `SensorService` via `EntityManager.find(...)`. Sonnet is the only model to correctly use `SensorService` for cross-feature validation.
+- **High-quality tier**: GPT 5.4 (ChatGPT) and GPT 5.3 Codex tie at rank 3 with 36/40. GPT 5.4 (ChatGPT) has the best JSON-model test coverage; GPT 5.3 Codex achieves perfect test coverage but bypasses `SensorService` via a JPQL query directly against the `Sensor` entity. GLM 4.7 and GPT 5.3 Codex Extra-High follow at 35/40; GLM is the strongest pay-per-use option with the richest JPA sensor graph; Codex Extra-High has the most thorough tests of any GPT model but carries a critical layering violation (`JpaSensorLookupRepository`). GPT 5.3 Codex High trails at 34/40.
 - **Viable but clearly flawed**: Claude Opus 4.6, Claude Haiku 4.5, Kimi K2.5, MiniMax 2.5, and Devstral produce mostly complete implementations, but each has a significant weakness such as DB-exception-based validation, empty sensor responses, major performance issues, incomplete sensor payloads, or placeholder logic.
 - **Not viable for this workflow**: Devstral Small 2, Nemotron 3 Nano, DeepSeek 3.2, and Qwen Turbo fail to deliver a complete, reliable feature. The dominant failure modes are partial implementations, missing tests, broken schema choices, invalid project structure, or tool-call breakdowns.
 
@@ -67,14 +67,11 @@ All scores are on a 1–10 scale.
 ---
 
 ### 1. Claude Sonnet 4.6
-**Total: 35 / 40**
+**Total: 36 / 40**
 
-#### Completeness — 9/10
+#### Completeness — 10/10
 
 **Present:** Migration, Entity (UUID, `@GeneratedValue(UUID)`, `@PrePersist`/`@PreUpdate`, `Instant`), Repository (with keyset pagination queries), Service, DTOs (Create, Update, Device with `Sensor` list), Controller (CRUD + assign + get), Exception Handler, Configuration, AGENTS.md update.
-
-**Issues (-1):**
-- `UpdateDeviceDto` passed into `DeviceService.updateDevice()` — DTO leaks into the service layer, violating the rule that services work with entities only.
 
 #### Test Coverage — 9/10
 
@@ -671,14 +668,11 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 ---
 
 ### 13. GPT 5.4 (ChatGPT)
-**Total: 35 / 40**
+**Total: 36 / 40**
 
-#### Completeness — 9/10
+#### Completeness — 10/10
 
 **Present:** Migration (named constraints, `TIMESTAMPTZ`), Entity (`@MapsId`, `@ManyToOne` back to `Sensor`), Repository (package-protected), Service, DTOs (Create, Update, Device with full local `SensorDto` list), Controller (CRUD + assign + get), Exception Handler (scoped, `ProblemDetail`), Configuration, AGENTS.md update. `findDetailedById` with `JOIN FETCH` for eager sensor loading.
-
-**Issues (-1):**
-- `updateDevice(UUID id, UpdateDeviceDto dto)` passes a DTO into the service layer — violates the AGENTS.md rule that services work with entities only.
 
 #### Test Coverage — 10/10
 
@@ -716,12 +710,12 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 - Missing `@GeneratedValue` on `Device.id` — UUID is assigned via a null-guard in `@PrePersist` (`if (id == null) id = UUID.randomUUID()`), which works but is less idiomatic than `@GeneratedValue(strategy = GenerationType.UUID)`.
 - `id UUID` in migration without `NOT NULL` — the GPT 5.4 (Copilot) run used `id UUID NOT NULL`.
 
-> **Comparison with GPT 5.4 (Copilot) (37/40)**: The two implementations are architecturally near-identical — same `EntityManager.find` strategy, same `JOIN FETCH` repository query, same DTO structures and test structure. The GPT 5.4 (ChatGPT) run trades the missing `@GeneratedValue` and DTO-in-service leak for a richer domain model (idempotency logic in the entity, `@Transactional(readOnly = true)` class-level annotation) and a more complete test suite (adds `SensorDtoTest`). The net result is 35/40 vs 37/40 — GPT 5.4 (ChatGPT) is two points behind due to the DTO-in-service and missing `@GeneratedValue`, despite being marginally stronger on test coverage and transaction management.
+> **Comparison with GPT 5.4 (Copilot) (37/40)**: The two implementations are architecturally near-identical — same `EntityManager.find` strategy, same `JOIN FETCH` repository query, same DTO structures and test structure. The GPT 5.4 (ChatGPT) run trades the DTO-in-service leak (Compliance) and missing `@GeneratedValue` (Code Quality) for a richer domain model (idempotency logic in the entity, `@Transactional(readOnly = true)` class-level annotation) and a more complete test suite (adds `SensorDtoTest`). The net result is 36/40 vs 37/40 — GPT 5.4 (ChatGPT) is one point behind due to the DTO-in-service compliance deduction and missing `@GeneratedValue`, despite being marginally stronger on test coverage and transaction management.
 
 ---
 
 ### 14. GPT 5.3 Codex Extra-High
-**Total: 34 / 40**
+**Total: 35 / 40**
 
 #### Completeness — 10/10
 
@@ -734,7 +728,7 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 **Issues (-1):**
 - Minor redundancy across some test scenarios.
 
-#### Compliance — 6/10
+#### Compliance — 7/10
 
 **Strengths:**
 - `@Configuration` bean wiring — no `@Service`/`@Component`.
@@ -743,9 +737,8 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 - AGENTS.md updated.
 - Named constraints in migration.
 
-**Issues (-4):**
+**Issues (-3):**
 - **Critical layering violation**: Creates `JpaSensorLookupRepository` — a Spring Data repository for the `Sensor` entity — inside the `devices` package. This explicitly violates AGENTS.md: *"Services should not directly access repositories from other service packages."* Creating a new repository in your own package for another feature's entity is worse than the spirit of the violation.
-- Imports `de.sfl.sensors.SensorDto` directly — cross-package DTO dependency.
 - Mixed indentation (4-space/tab inconsistency from codebase standard).
 
 #### Code Quality — 8/10
@@ -764,7 +757,7 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 ---
 
 ### 14. GPT 5.3 Codex
-**Total: 34 / 40**
+**Total: 36 / 40**
 
 #### Completeness — 9/10
 
@@ -773,14 +766,11 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 **Issues (-1):**
 - Migration missing named PK constraint (`id UUID PRIMARY KEY` inline instead of `CONSTRAINT pk_devices`).
 
-#### Test Coverage — 9/10
+#### Test Coverage — 10/10
 
 **Present:** `CreateDeviceDtoTest`, `DeviceDtoTest`, `UpdateDeviceDtoTest` (JSON model tests), `JpaDeviceRepositoryIT`, `JpaDeviceSensorRepositoryIT`, `DeviceServiceTest`, `DeviceControllerTest`. Uses `RepositoryIT`. AssertJ throughout. Test subclass pattern.
 
-**Issues (-1):**
-- Class-level `@Transactional` on service — not read-only by default.
-
-#### Compliance — 8/10
+#### Compliance — 9/10
 
 **Strengths:**
 - `@Configuration` bean wiring — no `@Service`/`@Component`.
@@ -790,9 +780,8 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 - `ProblemDetail` responses.
 - AGENTS.md updated.
 
-**Issues (-2):**
+**Issues (-1):**
 - Does **not** use `SensorService` for sensor validation — uses a custom `sensorExists()` JPQL query (`SELECT COUNT(s) > 0 FROM Sensor s WHERE s.id = :sensorId`) on `JpaDeviceSensorRepository`. This queries the `Sensor` entity directly from the devices package, bypassing the service boundary.
-- Class-level `@Transactional` (not read-only by default with explicit `@Transactional` on mutating methods).
 
 #### Code Quality — 8/10
 
@@ -964,11 +953,12 @@ AGENTS.md mandates a `toEntity()` method on inbound DTOs. The outbound direction
 ### Key Differentiators
 
 - **GPT 5.4 (GitHub Copilot)** is the top scorer at 37/40 — the richest JPA model (`@MapsId`, `JOIN FETCH`, full `@OneToMany`), no DTO-in-service leakage, DTO-owned transformation via `DeviceDto.from()`, `@GeneratedValue` present, and comprehensive tests. Its `EntityManager.find` approach for sensor validation is unconventional but avoids accessing package-protected repositories.
-- **GPT 5.4 (ChatGPT)** ties GLM at 35/40. Near-identical architecture to the GPT 5.4 (Copilot) run; the two-point gap vs. Copilot reflects a DTO-in-service leak and missing `@GeneratedValue`, offset by an additional `SensorDtoTest` and richer domain model.
-- **GLM 4.7** ties GPT 5.4 (ChatGPT) at 35/40. Its showstopper bugs (missing `@GeneratedValue`, Flyway schema misconfiguration) prevent ITs from passing, but the JPA relationship model and sensor response quality are among the strongest — `@ManyToOne` on `DeviceSensor` → `Sensor` gives the richest graph in a single DB query.
-- **Claude Sonnet 4.6** is 2nd at 36/40 — the only model to correctly use `SensorService` for cross-feature sensor validation, with 9/10 across Completeness, Test Coverage, and Compliance. Its single deduction per scored category (DTO-in-service in both Completeness and Compliance, plus no `SensorDto` JSON test in Test Coverage) puts it just behind the top GPT 5.4 (Copilot) run.
-- **GPT 5.3 Codex Extra-High, GPT 5.3 Codex, and GPT 5.3 Codex High** all tie at 34/40. Codex Extra-High invested the most effort time (20 min) and produced the most thorough test suite of any GPT model, but created `JpaSensorLookupRepository` — the most explicit layering violation in the evaluation. Codex and Codex High produced equally scored results at the default/high effort levels. Codex Low returns full sensor details; Codex and Codex High return only IDs. The additional effort levels deliver no measurable quality improvement.
-- **GPT 5.3 Codex Low** scored 33/40. Each Codex variant chose a different sensor validation strategy (JPQL, EntityManager, native SQL) — all bypass `SensorService`. This suggests GPT models better internalized the "services work with entities" rule but missed the cross-feature layering rule.
+- **GPT 5.4 (ChatGPT)** ranks 3rd at 36/40. Near-identical architecture to the GPT 5.4 (Copilot) run; the one-point gap vs. Copilot reflects the DTO-in-service compliance deduction and missing `@GeneratedValue`, offset by an additional `SensorDtoTest` and richer domain model.
+- **GLM 4.7** ranks 4th at 35/40. Its showstopper bugs (missing `@GeneratedValue`, Flyway schema misconfiguration) prevent ITs from passing, but the JPA relationship model and sensor response quality are among the strongest — `@ManyToOne` on `DeviceSensor` → `Sensor` gives the richest graph in a single DB query.
+- **Claude Sonnet 4.6** ties GPT 5.4 (Copilot) at 37/40 — the only model to correctly use `SensorService` for cross-feature sensor validation, with 10/10 Completeness and 9/10 across Test Coverage and Compliance.
+- **GPT 5.4 (ChatGPT) and GPT 5.3 Codex** tie at rank 3 with 36/40. GPT 5.4 (ChatGPT) is near-identical to the Copilot run with the best JSON-model test coverage. GPT 5.3 Codex achieves 10/10 test coverage and 9/10 compliance — its single deduction is bypassing `SensorService` via a JPQL query directly against the `Sensor` entity.
+- **GPT 5.3 Codex Extra-High** ranks 5th at 35/40. It invested the most effort time (20 min) and produced the most thorough test suite of any GPT model, but created `JpaSensorLookupRepository` — the most explicit layering violation in the evaluation. Codex High trails at 34/40. Codex Low (33/40) returns full sensor details, unlike Default and High which return only IDs.
+- **GPT 5.3 Codex Low** scored 33/40. Each Codex variant chose a different sensor validation strategy (JPQL, EntityManager, native SQL) — all bypass `SensorService`. This suggests GPT models internalized the "services work with entities" rule but consistently missed the cross-feature layering rule.
 - **Claude Opus 4.6** is 9th at 32/40. Architecturally unusual — it chose a `DataIntegrityViolationException` catch as a proxy for sensor validation, which is fragile and bypasses the layering rule. Despite being a top-tier plan producer, the implementation reflects less codebase alignment than Sonnet or GPT 5.4.
 - **Haiku** is 10th at 31/40. The primary quality issue is a subtle but critical bug: the controller always calls the no-sensors DTO constructor despite a full `@OneToMany` relationship being defined — every device response returns an empty sensor list regardless of assignments. This is a functional gap that makes the sensor assignment feature invisible to API consumers.
 - **Kimi** (29/40) suffers from a critical performance bug (`findAll().stream().filter()`) and missing DTO tests, but the core structure is otherwise sound.
