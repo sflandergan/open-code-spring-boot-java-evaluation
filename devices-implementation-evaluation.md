@@ -7,7 +7,7 @@
 | 1 | **Completeness** | All required artifacts present and functional: migration, entity, repository, service, DTOs, controller, exception handler, configuration, AGENTS.md update |
 | 2 | **Test Coverage** | JSON model tests, repository ITs, service unit tests, controller tests — all present, passing, and meaningful |
 | 3 | **Compliance with AGENTS.md / Patterns** | Follows AGENTS.md rules and the linked pattern docs: no `@Service`/`@Component`, `@Configuration` wiring, package-protected repo, layering rule (SensorService not JpaSensorRepository), GDPR logging, no unnecessary interface, DTO only in controller layer |
-| 4 | **Code Quality** | Naming conventions, proper imports (no FQN inline), efficient DB queries (no unnecessary duplicate reads, no `findAll().stream().filter()`), correct ID generation, correct timestamp type, correct migration filename format |
+| 4 | **Code Quality** | Naming conventions, proper imports (no FQN inline), efficient DB queries (no unnecessary duplicate reads, no `findAll().stream().filter()`), correct ID generation, correct timestamp type, correct migration filename format, DTO transformation placement (transformation to/from entity belongs in the DTO, not in the controller) |
 
 All scores are on a 1–10 scale.
 
@@ -27,6 +27,7 @@ All scores are on a 1–10 scale.
 - **Keyset pagination** preferred over offset.
 - **Test subclass pattern** (`ENTITY_TEST_DATA.md`) — use a test subclass or constructor, never reflection.
 - **AssertJ** assertions in all tests.
+- **DTO transformation placement** — transformation to/from entity belongs in the DTO (e.g., `DeviceDto.from(entity)`, `dto.toEntity()`), not as inline mapping logic in the controller. This keeps controllers thin, co-locates mapping with the DTO's own structure, and reduces duplication.
 
 ---
 
@@ -35,12 +36,12 @@ All scores are on a 1–10 scale.
 | Rank | Model | Completeness | Test Coverage | Compliance | Code Quality | **Total** |
 |------|-------|:------------:|:-------------:|:----------:|:------------:|:---------:|
 | 1 | GPT 5.4 (GitHub Copilot) | 10 | 9 | 9 | 9 | **37** |
-| 2 | Claude Sonnet 4.6 | 9 | 9 | 8 | 9 | **35** |
-| 2 | GLM 4.7 | 9 | 8 | 9 | 9 | **35** |
 | 2 | GPT 5.4 (ChatGPT) | 9 | 10 | 8 | 8 | **35** |
-| 5 | GPT 5.3 Codex Extra-High | 10 | 9 | 6 | 9 | **34** |
-| 5 | GPT 5.3 Codex | 9 | 9 | 8 | 8 | **34** |
-| 5 | GPT 5.3 Codex High | 9 | 9 | 8 | 8 | **34** |
+| 3 | Claude Sonnet 4.6 | 9 | 9 | 8 | 8 | **34** |
+| 3 | GLM 4.7 | 9 | 8 | 9 | 8 | **34** |
+| 3 | GPT 5.3 Codex Extra-High | 10 | 9 | 6 | 9 | **34** |
+| 3 | GPT 5.3 Codex | 9 | 9 | 8 | 8 | **34** |
+| 3 | GPT 5.3 Codex High | 9 | 9 | 8 | 8 | **34** |
 | 8 | GPT 5.3 Codex Low | 9 | 7 | 9 | 8 | **33** |
 | 9 | Claude Opus 4.6 | 8 | 8 | 8 | 8 | **32** |
 | 10 | Claude Haiku 4.5 | 8 | 8 | 7 | 8 | **31** |
@@ -60,6 +61,12 @@ All scores are on a 1–10 scale.
 >
 > **Note on GPT 5.4 (ChatGPT)**: Same `EntityManager.find` approach as the GPT 5.4 (Copilot) run. Additionally passes `UpdateDeviceDto` into the service layer and is missing `@GeneratedValue` on `Device.id` (compensated by a null-guard in `@PrePersist`). Adds a `SensorDtoTest` that the GPT 5.4 (Copilot) run lacked.
 >
+> **Note on Claude Sonnet 4.6**: Dropped from 35 to 34 due to controller-side DTO transformation — `toDto(Device, List<Sensor>)` on the controller performs inline field extraction, same pattern as GLM. Despite this, Sonnet remains the only model to correctly use `SensorService` for cross-feature sensor validation.
+>
+> **Note on GLM 4.7**: Dropped from 35 to 34 due to controller-side DTO transformation — the `toDto()` method on the controller extracts all fields inline rather than delegating to `DeviceDto.from(entity)`.
+>
+> **Note on Claude Haiku 4.5**: The controller has a `private toDto(Device device)` wrapper method but it delegates to `new DeviceDto(device)` — the mapping logic lives in the DTO constructor, so this is DTO-owned transformation. The Code Quality deduction is for the wrong DTO constructor being called (no-sensors constructor always used), not for mapping placement.
+>
 > **Note on GPT 5.3 Codex Extra-High**: Created `JpaSensorLookupRepository` (a Spring Data repo for `Sensor` entity) in the `devices` package — a clear layering violation creating infrastructure to access another feature's entity.
 >
 > **Note on GPT 5.3 Codex models**: None of the five GPT 5.3 Codex models use `SensorService` for cross-feature sensor validation. Each model chose a different bypass strategy: `EntityManager.find`, JPQL query, native SQL, or a custom repository.
@@ -71,7 +78,7 @@ All scores are on a 1–10 scale.
 ---
 
 ### 1. Claude Sonnet 4.6
-**Total: 35 / 40**
+**Total: 34 / 40**
 
 #### Completeness — 9/10
 
@@ -103,7 +110,7 @@ All scores are on a 1–10 scale.
 - `UpdateDeviceDto` passed to `DeviceService` — DTO in service layer violates AGENTS.md.
 - Migration filename `V202511141200__create_device_tables.sql` reuses the same timestamp as the existing `V202511141138__create_sensor_tables.sql` test migration (seconds differ but minute resolution is the same). Not a hard Flyway conflict but shows the timestamp was not genuinely generated.
 
-#### Code Quality — 9/10
+#### Code Quality — 8/10
 
 **Strengths:**
 - Clean, readable method names matching AGENTS.md style.
@@ -112,7 +119,8 @@ All scores are on a 1–10 scale.
 - Proper imports (no FQN inline).
 - Efficient: uses `existsByIdDeviceIdAndIdSensorId` before saving — no unnecessary read-back.
 
-**Issues (-1):**
+**Issues (-2):**
+- `toDto(Device, List<Sensor>)` on the controller performs inline field extraction — the mapping logic (`s.getId()`, `s.getName()`, etc.) lives in the controller rather than in `DeviceDto`. Same pattern as GLM.
 - `UpdateDeviceDto.applyToEntity()` is called inside the service, meaning the DTO logic subtly bleeds past the controller boundary.
 
 ---
@@ -160,15 +168,16 @@ All scores are on a 1–10 scale.
 - `TIMESTAMPTZ` in migration.
 - `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
 - No FQN inline imports.
+- `DeviceDto(Device device, List<SensorSummaryDto> sensors)` constructor — transformation logic lives in the DTO, the controller's `toDto()` method is just a thin wrapper delegating to the DTO constructor.
 
 **Issues (-2):**
 - Migration filename `V202511141200__create_device_tables.sql` uses a past timestamp.
-- Sensor data never surfaced in API response — `@OneToMany` relationship and `SensorSummaryDto` were defined but the controller ignores them, making the sensor assignment feature partially invisible to API consumers.
+- Sensor data never surfaced in API response — `@OneToMany` relationship and `SensorSummaryDto` were defined but the controller ignores them by calling the no-sensors constructor, making the sensor assignment feature partially invisible to API consumers.
 
 ---
 
 ### 3. GLM 4.7
-**Total: 35 / 40**
+**Total: 34 / 40**
 
 #### Completeness — 9/10
 
@@ -199,17 +208,18 @@ All scores are on a 1–10 scale.
 **Issues (-1):**
 - DTOs (`UpdateDeviceDto`) passed into `DeviceService.updateDevice()` — DTO in service layer.
 
-#### Code Quality — 9/10
+#### Code Quality — 8/10
 
 **Strengths:**
 - Clean, readable code overall.
 - `TIMESTAMPTZ` in migration.
 - `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
 - Good method decomposition.
-- **Best relationship mapping**: `DeviceSensor` has a `@ManyToOne` back to `Sensor`, and the controller's `toDto()` walks `device.getSensors()` to build a full `SensorDto` list from the JPA graph — the richest sensor response of any implementation.
+- **Best relationship mapping**: `DeviceSensor` has a `@ManyToOne` back to `Sensor`, enabling navigation from device to full `SensorDto` list via the JPA graph — the richest sensor response of any implementation.
 
-**Issues (-1):**
+**Issues (-2):**
 - Missing `@GeneratedValue` on entity `@Id` — critical for correct JPA behaviour.
+- Transformation logic is a `toDto()` method on the controller rather than a factory method on `DeviceDto` — mapping should live in `DeviceDto.from(entity)` to keep the controller thin and co-locate mapping with the DTO's own structure.
 
 > **Note on Flyway schema name**: GLM's Flyway configuration references a wrong schema name, causing ITs to fail. This is counted once in Test Coverage (as the tests do not pass) but not as an additional Code Quality deduction.
 
@@ -300,6 +310,7 @@ All scores are on a 1–10 scale.
 **Strengths:**
 - `TIMESTAMPTZ` in migration.
 - `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
+- `DeviceDto.fromEntity()` — transformation encapsulated as a static factory on the DTO, which is the correct style.
 
 **Issues (-4):**
 - Missing `@GeneratedValue` — critical.
@@ -354,6 +365,7 @@ All scores are on a 1–10 scale.
 **Issues (-2):**
 - `DataIntegrityViolationException` used as a proxy for sensor-not-found — fragile coupling to DB constraint behaviour.
 - Migration file timestamp (`V202603151000`) appears to be today's date — which is fine operationally but confirms the model generated a future/arbitrary date rather than a real one.
+- DTO transformation is done inline in the controller: `new DeviceDto(device, sensors)` assembled directly in each handler method rather than via a `DeviceDto.from(entity)` factory. Not counted as a separate deduction since the controller-side build is the smaller of the quality issues here.
 
 ---
 
@@ -401,6 +413,7 @@ All scores are on a 1–10 scale.
 - Readable structure and method decomposition.
 - Proper imports.
 - `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
+- `DeviceDto.fromEntityWithoutSensors()` — transformation encapsulated as a static factory on the DTO, which is the correct style.
 
 **Issues (-4):**
 - `getDeviceSensors()` returns empty list — fundamentally broken sensor retrieval.
@@ -660,7 +673,7 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 **Strengths:**
 - Richest JPA relationship mapping of the GPT group: `@OneToMany` on Device → DeviceSensor, `@ManyToOne` with `@MapsId` back to `Sensor`.
 - `JOIN FETCH` query in repository for eager sensor loading — efficient single-query approach.
-- Full sensor details (id, name, type, capabilities) returned in API response via `DeviceDto.from()`.
+- Full sensor details (id, name, type, capabilities) returned in API response via `DeviceDto.from()` — transformation encapsulated in the DTO, not the controller.
 - Named constraints in migration (`CONSTRAINT pk_devices`, `CONSTRAINT fk_device_sensors_device`, etc.).
 - `TIMESTAMPTZ` in migration.
 - `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
@@ -706,7 +719,7 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 **Strengths:**
 - Rich JPA model: `@OneToMany` on Device → DeviceSensor, `@ManyToOne` with `@MapsId` back to `Sensor`.
 - `JOIN FETCH` query in repository for eager sensor loading.
-- Full sensor details (id, name, type, capabilities) returned in API response.
+- Full sensor details (id, name, type, capabilities) returned in API response via DTO factory methods — transformation encapsulated in the DTO.
 - Named constraints in migration.
 - `TIMESTAMPTZ` in migration.
 - `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
@@ -921,6 +934,7 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 |-------|--------------------------|
 | No `SensorService` for cross-feature validation | All GPT models (5.4 gh, 5.4 oai, Codex, Codex Low, Codex High, Codex xHigh), Haiku, Opus, Devstral |
 | DTOs passed to service layer | Sonnet, Haiku, GLM, Kimi, MiniMax, Devstral, Opus, GPT 5.4 (oai) |
+| Controller-side DTO transformation (instead of DTO-owned) | Sonnet, GLM, Opus, Nemotron |
 | Missing `@GeneratedValue` on UUID entity | GLM, MiniMax, Devstral, GPT 5.4 (oai) |
 | `TIMESTAMP` instead of `TIMESTAMPTZ` | Devstral, Devstral-Small |
 | Missing named FK/PK constraints | Devstral, Devstral-Small, DeepSeek, GPT 5.3 Codex |
@@ -950,15 +964,30 @@ A key differentiator across implementations is whether assigned sensor data is m
 
 **Sonnet** resolves sensors through `SensorService`, which is the architecturally correct approach (respects the cross-feature service boundary). **GLM** uses JPA relationship traversal (`@ManyToOne` on `DeviceSensor` → `Sensor`), which is also a valid approach and produces the richest graph in a single DB query. Both are valid; Sonnet's approach is more aligned with the AGENTS.md layering rules since it goes through the service boundary.
 
+### DTO Transformation Placement
+
+A secondary quality differentiator is where the to/from-entity mapping logic lives. The preferred style is for the DTO to own its transformation: `DeviceDto.from(entity)` as a static factory, or `dto.toEntity()` as an instance method. This keeps controllers thin, co-locates mapping with the DTO's own field structure, and avoids duplication when the same transformation is needed from multiple call sites.
+
+| Approach | Models | Notes |
+|----------|--------|-------|
+| **DTO-owned factory/constructor** (`DeviceDto.from()`, `dto.toEntity()`, DTO constructor) | GPT 5.4 (gh), GPT 5.4 (oai), Haiku, MiniMax, Devstral | Best style; controller delegates to the DTO |
+| **Controller-side inline mapping** (`toDto(entity)` with field extraction on controller) | Sonnet, GLM, Opus, Nemotron | Mapping logic lives in the controller, not the DTO |
+| **Controller wrapper → DTO factory** (controller `toDto()` delegates to `DeviceDto.from()`) | GPT 5.3 Codex, Codex Low, Codex High, Codex XHigh | Hybrid: wrapper on controller, but actual mapping in DTO factory — the wrapping adds indirection without value |
+
+**GPT 5.4 (Copilot)** is the clearest example of the correct style — `DeviceDto.from(entity)` with all mapping logic in the DTO. **Haiku** also uses DTO-owned transformation — its controller `toDto()` wrapper delegates to `new DeviceDto(device)`, keeping mapping logic inside the DTO constructor. **Sonnet**, **GLM**, **Opus**, and **Nemotron** placed the field-extraction logic directly in the controller. This was counted as a -1 in Code Quality for Sonnet and GLM (the clearest cases); Opus and Nemotron have more significant architectural issues that are already penalized. **MiniMax** used `DeviceDto.fromEntity()` — the right pattern — but the implementation was broken because the mapped fields were null. **Devstral** used `DeviceDto.fromEntityWithoutSensors()` — DTO-owned factory — though the name reflects the incomplete sensor retrieval. The four GPT 5.3 Codex variants use a controller `toDto()` wrapper that delegates to `DeviceDto.from()` — functionally equivalent to DTO-owned since the mapping logic is in the DTO, but the wrapper adds unnecessary indirection.
+
+**Note on Sonnet**: `UpdateDeviceDto.applyToEntity()` demonstrates the right intent — transformation logic belongs in the DTO — but it was called from the service layer (where DTOs should not appear), making it a mixed signal. The pattern is sound; the placement boundary violation is the actual problem, which is already penalized under Compliance.
+
 ### Key Differentiators
 
-- **GPT 5.4 (GitHub Copilot)** is the top scorer at 37/40 — the richest JPA model (`@MapsId`, `JOIN FETCH`, full `@OneToMany`), no DTO-in-service leakage, `@GeneratedValue` present, and comprehensive tests. Its `EntityManager.find` approach for sensor validation is unconventional but avoids accessing package-protected repositories.
-- **GPT 5.4 (ChatGPT)** scores 35/40 — near-identical architecture to the GPT 5.4 (Copilot) run with two key differences: the service accepts `UpdateDeviceDto` directly (DTO leak) and `Device.id` lacks `@GeneratedValue` (compensated by a `@PrePersist` null-guard). On the other hand, it adds `SensorDtoTest` that the GPT 5.4 (Copilot) run was missing, uses `@Transactional(readOnly = true)` at class level, and encodes idempotency logic directly in the `Device` entity. The result is the same overall quality tier — just with different trade-offs. The two runs confirm that GPT 5.4 produces highly consistent, high-quality output regardless of the OpenCode version or provider endpoint used.
-- **Sonnet** and **GLM** also tie at 35/40. Sonnet is the most complete working implementation and the only model that correctly used `SensorService` for cross-feature sensor validation. GLM rose to the same level on the strength of its relationship mapping (full JPA graph, richest sensor response) and broad test coverage; its showstopper bugs (missing `@GeneratedValue`, Flyway schema misconfiguration) prevent the tests from passing but the code structure and design quality are high.
+- **GPT 5.4 (GitHub Copilot)** is the top scorer at 37/40 — the richest JPA model (`@MapsId`, `JOIN FETCH`, full `@OneToMany`), no DTO-in-service leakage, DTO-owned transformation via `DeviceDto.from()`, `@GeneratedValue` present, and comprehensive tests. Its `EntityManager.find` approach for sensor validation is unconventional but avoids accessing package-protected repositories.
+- **GPT 5.4 (ChatGPT)** moves to sole 2nd at 35/40. Near-identical architecture to the GPT 5.4 (Copilot) run; the two-point gap reflects a DTO-in-service leak and missing `@GeneratedValue`, offset by an additional `SensorDtoTest` and richer domain model.
+- **Claude Sonnet 4.6** drops to 3rd at 34/40, tying the GPT 5.3 Codex group. The -1 reflects controller-side DTO mapping (`toDto()` with inline field extraction on the controller). Despite this, Sonnet remains the only model to correctly use `SensorService` for cross-feature sensor validation — the architecturally cleanest layering approach.
+- **GLM 4.7** scores 34/40. Despite tying Sonnet in the original evaluation, GLM's controller-side `toDto()` mapping is a weaker pattern than DTO-owned transformation. Its showstopper bugs (missing `@GeneratedValue`, Flyway schema misconfiguration) prevent tests from passing, but the JPA relationship model and sensor response quality are among the strongest.
 - **GPT 5.3 Codex Extra-High, GPT 5.3 Codex, and GPT 5.3 Codex High** all tie at 34/40. Codex Extra-High invested the most effort time (20 min) and produced the most thorough test suite of any GPT model, but created `JpaSensorLookupRepository` — the most explicit layering violation in the evaluation. Codex and Codex High produced equally scored results at the default/high effort levels. Codex Low returns full sensor details; Codex and Codex High return only IDs. The additional effort levels deliver no measurable quality improvement.
 - **GPT 5.3 Codex Low** scored 33/40. Each Codex variant chose a different sensor validation strategy (JPQL, EntityManager, native SQL) — all bypass `SensorService`. This suggests GPT models better internalized the "services work with entities" rule but missed the cross-feature layering rule.
-- **Claude Opus 4.6** is 8th at 32/40. Architecturally unusual — it chose a `DataIntegrityViolationException` catch as a proxy for sensor validation, which is fragile and bypasses the layering rule. Despite being a top-tier plan producer, the implementation reflects less codebase alignment than Sonnet or GLM.
-- **Haiku** fell to 9th (31/40) due to a subtle but critical bug: despite defining `SensorSummaryDto` and a full `@OneToMany` relationship, the controller always calls the no-sensors constructor — the feature is architecturally present but functionally broken for API consumers.
+- **Claude Opus 4.6** is 9th at 32/40. Architecturally unusual — it chose a `DataIntegrityViolationException` catch as a proxy for sensor validation, which is fragile and bypasses the layering rule. Despite being a top-tier plan producer, the implementation reflects less codebase alignment than Sonnet or GPT 5.4.
+- **Haiku** is 10th at 31/40. The primary quality issue is a subtle but critical bug: the controller always calls the no-sensors DTO constructor despite a full `@OneToMany` relationship being defined — every device response returns an empty sensor list regardless of assignments. This is a functional gap that makes the sensor assignment feature invisible to API consumers.
 - **Kimi** (29/40) suffers from a critical performance bug (`findAll().stream().filter()`) and missing DTO tests, but the core structure is otherwise sound.
 - **MiniMax** (28/40) has the unnecessary-read-back bug in `assignSensor`, missing `@GeneratedValue`, and a misleading sensor response that includes structurally correct but data-empty sensor objects.
 - **Devstral (cloud)** (25/40) produced working code structure but with the sensor retrieval left as a placeholder — a fundamental functional gap acknowledged in the code itself.
@@ -970,6 +999,6 @@ All models that produced a migration used the double-underscore separator correc
 
 ### The DTO-in-Service Anti-Pattern
 
-The most pervasive single violation across the original evaluation models is passing DTOs into the service layer. Only **Sonnet** used `SensorService` correctly for cross-feature validation. Every non-GPT model that produced a service leaked at least one DTO type into it.
+The most pervasive single violation across the evaluation models is passing DTOs into the service layer. Every non-GPT model that produced a service leaked at least one DTO type into it. Only **GPT 5.4 (Copilot)** and the GPT 5.3 Codex models consistently avoided the pattern; **Sonnet** used `UpdateDeviceDto.applyToEntity()` from the service, which is a boundary violation even though the transformation logic itself is correctly encapsulated in the DTO.
 
-Notably, **the GPT 5.4 (Copilot) run avoids the DTO-in-service pattern** — its service methods accept entity parameters or primitive types, not DTOs. The **GPT 5.4 (ChatGPT) run**, however, did pass `UpdateDeviceDto` into the service, suggesting this is not a guaranteed property of the model but rather a run-to-run variation. The five GPT 5.3 Codex models also generally avoided DTOs in service methods. Regardless, both GPT 5.4 runs share a universal violation: **neither uses `SensorService`** for cross-feature sensor validation, opting instead for `EntityManager.find`. This suggests that while GPT 5.4 internalized the "services work with entities" rule, it consistently missed the cross-feature layering rule that services should go through other feature services, not directly access other features' entities or tables.
+**The GPT 5.4 (Copilot) run avoids the DTO-in-service pattern** — its service methods accept entity parameters or primitive types, not DTOs. The **GPT 5.4 (ChatGPT) run**, however, did pass `UpdateDeviceDto` into the service, suggesting this is not a guaranteed property of the model but rather a run-to-run variation. The five GPT 5.3 Codex models also generally avoided DTOs in service methods. Regardless, both GPT 5.4 runs share a universal violation: **neither uses `SensorService`** for cross-feature sensor validation, opting instead for `EntityManager.find`. This suggests that while GPT 5.4 internalized the "services work with entities" rule, it consistently missed the cross-feature layering rule that services should go through other feature services, not directly access other features' entities or tables.
