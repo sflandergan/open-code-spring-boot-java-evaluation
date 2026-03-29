@@ -301,18 +301,13 @@ All models implemented the feature using the Claude Haiku 4.5 plan as a shared b
 
 ### Key Takeaways — Implementation
 
-- **GPT 5.4 (Copilot) is the top scorer at 37/40** — the richest JPA model (`@MapsId`, `JOIN FETCH`, full `@OneToMany`) with full sensor details, DTO-owned transformation via `DeviceDto.from()`, and a complete test suite in 9 minutes. It bypasses `SensorService` via `EntityManager.find` but avoids accessing package-protected repositories, making it a middle-ground approach.
-- **GPT 5.4 (ChatGPT) scores 35/40** — near-identical architecture to GPT 5.4 (Copilot). The two-point gap is explained by a DTO-in-service leak and a missing `@GeneratedValue`, offset by an additional `SensorDtoTest` and richer domain model. The results confirm GPT 5.4 produces highly consistent output regardless of access path. However, ChatGPT Plus is subject to daily and weekly usage caps, making GitHub Copilot the better choice for this workflow.
-- **Sonnet scores 34/40** — the only model to correctly use `SensorService` for cross-feature sensor validation (architecturally cleanest layering), but uses controller-side DTO mapping (`toDto()` with inline field extraction), the same pattern as GLM. It now ties the GPT 5.3 Codex group.
-- **GLM 4.7 scores 34/40** — down one point from the original evaluation for controller-side DTO transformation (a `toDto()` method on the controller rather than `DeviceDto.from(entity)`). It still has the richest API response via JPA graph traversal and ties the GPT 5.3 Codex group.
-- **GPT 5.3 Codex, Codex High, and Codex Extra-High all score 34/40**, forming a tight cluster. Extra-High added more test depth but introduced a layering violation (`JpaSensorLookupRepository`). Codex and Codex High are cleaner at the same score.
-- **GPT 5.3 Codex thinking levels show diminishing returns for implementation**: Low (33/40, 9m), Default (34/40, 10m), High (34/40, 14m), Extra-High (34/40, 20m). Default thinking is the best value for implementation. Planning has not yet been evaluated for GPT models.
-- **Opus plans well but implements at 32/40** — it caught a `DataIntegrityViolationException` as a proxy for sensor validation, bypassing the layering rule. Planning ability does not predict implementation quality.
-- **Haiku scored 31/40** — it uses DTO-owned transformation (mapping logic in the DTO constructor), but has a critical functional bug: the controller always calls the no-sensors DTO constructor despite a full `@OneToMany` relationship being defined, making every device response return an empty sensor list regardless of assignments.
-- **Kimi was the fastest cloud model (6 min)** but shipped a critical `findAll().stream().filter()` performance bug that would break at scale.
-- **GPT models generally avoided the DTO-in-service anti-pattern** that affected nearly all other models — GPT 5.4 (Copilot) and all five Codex variants kept DTOs out of the service layer. GPT 5.4 (ChatGPT) did pass `UpdateDeviceDto` into the service, showing this is probabilistic rather than guaranteed even within the same model family.
-- **DTO-owned transformation** (`DeviceDto.from(entity)`) is the preferred pattern and was used by GPT 5.4 (both runs), Haiku, and MiniMax. Sonnet, GLM, Opus, and Nemotron placed inline mapping logic in the controller — Sonnet and GLM each received a -1 Code Quality deduction for this.
-- **Local models are insufficient for this workflow**: The best local implementation (Devstral Small 2, 13/40) only produced the data layer after 54 minutes. No local model produced a working feature under these conditions.
+- **GPT 5.4 (Copilot) is the top scorer at 37/40** — strongest overall implementation quality, richest JPA model, full sensor details, and complete tests in 9 minutes.
+- **GPT 5.4 (ChatGPT) is close behind at 35/40** — very similar output quality, but weaker on layering and ID generation; Copilot remains the better value due to lower cost and no usage caps.
+- **Sonnet is the cleanest architectural implementation at 34/40** — the only model that validates cross-feature sensors through `SensorService` as required by the layering rules.
+- **GLM 4.7 is the best pay-per-use implementation at 34/40** — strong JPA graph traversal and rich sensor responses, but weaker on test reliability and DTO mapping placement.
+- **GPT 5.3 Codex variants form a strong middle cluster** — Default, High, and Extra-High all land at 34/40, so higher thinking levels bring little implementation benefit.
+- **Haiku and Kimi are workable but flawed** — Haiku returns empty sensor lists despite the relationship being present, while Kimi ships a serious `findAll().stream().filter()` performance bug.
+- **Local models are not viable for this workflow** — the best local implementation scored 13/40 and still failed to produce a complete working feature.
 
 > See [`devices-implementation-evaluation.md`](devices-implementation-evaluation.md) for detailed per-model analysis and scoring breakdown.
 

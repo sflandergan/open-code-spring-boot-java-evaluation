@@ -53,23 +53,12 @@ All scores are on a 1–10 scale.
 | 16 | DeepSeek 3.2 | 2 | 1 | 2 | 3 | **8** |
 | 17 | Qwen Turbo | 1 | 1 | 1 | 1 | **4** |
 
-> **Note on Opus**: Full implementation but used `DataIntegrityViolationException` as a proxy for `SensorNotFoundException` instead of calling `SensorService`, bypassing the layering rule.
->
-> **Note on Devstral**: Architecturally complete but `getDeviceSensors()` explicitly returns a hardcoded empty list with a placeholder comment — sensors are never returned from any device response.
->
-> **Note on GPT 5.4 (GitHub Copilot)**: Used `EntityManager.find(Sensor.class, sensorId)` for cross-feature sensor validation — bypasses `SensorService` but does not access `JpaSensorRepository` directly.
->
-> **Note on GPT 5.4 (ChatGPT)**: Same `EntityManager.find` approach as the GPT 5.4 (Copilot) run. Additionally passes `UpdateDeviceDto` into the service layer and is missing `@GeneratedValue` on `Device.id` (compensated by a null-guard in `@PrePersist`). Adds a `SensorDtoTest` that the GPT 5.4 (Copilot) run lacked.
->
-> **Note on Claude Sonnet 4.6**: Dropped from 35 to 34 due to controller-side DTO transformation — `toDto(Device, List<Sensor>)` on the controller performs inline field extraction, same pattern as GLM. Despite this, Sonnet remains the only model to correctly use `SensorService` for cross-feature sensor validation.
->
-> **Note on GLM 4.7**: Dropped from 35 to 34 due to controller-side DTO transformation — the `toDto()` method on the controller extracts all fields inline rather than delegating to `DeviceDto.from(entity)`.
->
-> **Note on Claude Haiku 4.5**: The controller has a `private toDto(Device device)` wrapper method but it delegates to `new DeviceDto(device)` — the mapping logic lives in the DTO constructor, so this is DTO-owned transformation. The Code Quality deduction is for the wrong DTO constructor being called (no-sensors constructor always used), not for mapping placement.
->
-> **Note on GPT 5.3 Codex Extra-High**: Created `JpaSensorLookupRepository` (a Spring Data repo for `Sensor` entity) in the `devices` package — a clear layering violation creating infrastructure to access another feature's entity.
->
-> **Note on GPT 5.3 Codex models**: None of the five GPT 5.3 Codex models use `SensorService` for cross-feature sensor validation. Each model chose a different bypass strategy: `EntityManager.find`, JPQL query, native SQL, or a custom repository.
+### Key Differences by Category
+
+- **Top scorer**: GPT 5.4 (GitHub Copilot) leads with the strongest overall balance of completeness, code quality, and test coverage. Its main trade-off is bypassing `SensorService` via `EntityManager.find(...)`.
+- **High-quality tier**: GPT 5.4 (ChatGPT), Claude Sonnet 4.6, GLM 4.7, and the GPT 5.3 Codex variants all produce broadly complete and usable implementations. The main differences are architectural cleanliness: Sonnet is best on layering, GLM is the strongest pay-per-use option, GPT 5.4 (ChatGPT) has the best JSON-model test coverage, and the Codex variants are consistent but all bypass `SensorService`.
+- **Viable but clearly flawed**: Claude Opus 4.6, Claude Haiku 4.5, Kimi K2.5, MiniMax 2.5, and Devstral produce mostly complete implementations, but each has a significant weakness such as DB-exception-based validation, empty sensor responses, major performance issues, incomplete sensor payloads, or placeholder logic.
+- **Not viable for this workflow**: Devstral Small 2, Nemotron 3 Nano, DeepSeek 3.2, and Qwen Turbo fail to deliver a complete, reliable feature. The dominant failure modes are partial implementations, missing tests, broken schema choices, invalid project structure, or tool-call breakdowns.
 
 ---
 
