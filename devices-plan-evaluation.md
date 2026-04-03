@@ -831,7 +831,7 @@ Before evaluating, the following facts from the codebase were established as gro
 **Covered:** Migration, Entity, Repository, Exceptions, Service (via interface+impl), DTOs, Controller, Exception Handler, Configuration, JSON model tests, Repository IT, Service test, Controller test, AGENTS.md update.
 
 **Issues (-5):**
-- No `GET /api/devices` list endpoint is planned, so the feature is not production-complete under the completeness rubric.
+- No `GET /api/devices` list endpoint is planned, so the feature is not production-complete under the completeness rubric (-2).
 - Creating an unnecessary interface doubles the artifact count without value.
 - No `mvn verify` step.
 - Full integration test class `DeviceControllerIT` mentioned but not planned in `CONTROLLER_TESTING.md`.
@@ -1037,7 +1037,6 @@ Before evaluating, the following facts from the codebase were established as gro
 - No exception handler class mentioned.
 - No `ProblemDetail` or `@RestControllerAdvice`.
 - No `mvn verify` step.
-- No pagination endpoint planned.
 - No GET endpoints defined (no list, no get-by-id).
 - Service layer defined as interface only — no indication of how beans are wired.
 
