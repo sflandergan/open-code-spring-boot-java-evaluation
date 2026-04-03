@@ -6,8 +6,8 @@ The goal is to find a suitable setup for everyday feature development given real
 ## TL;DR
 
 **Best setup**: Use a [GitHub Copilot Pro subscription](https://github.com/features/copilot/plans) ($10/month) with **Claude Sonnet 4.6** (~$0.03/prompt) or **Claude Opus 4.6** (~$0.09/prompt, 3× Sonnet cost) for planning and **GPT 5.4** (~$0.03/prompt) for implementation.
-GPT 5.4 is the top implementation scorer and also plans competently (31/40), but Claude models remain clearly better planners.
-Sonnet 4.6 remains the best single-model workflow (34/40 planning, 37/40 implementation) if you prefer to keep everything in one model.
+GPT 5.4 is the top implementation scorer and also plans competently (31/40). Claude models lead the planning phase.
+For a single-model workflow, Claude Sonnet 4.6 scores 34/40 in planning and 37/40 in implementation.
 
 **No subscription**: Use [Requesty](https://requesty.ai) with **GLM 4.7** for planning and **MiniMax M2.5** for implementation at ~$0.49/feature — the cheapest pay-per-use combination that produces a fully functional result (34/40 plan, 28/40 implementation). A Copilot Pro subscription is cheaper per feature if you implement more than ~21 features/month.
 
@@ -271,13 +271,13 @@ The planning prompt asked each model to produce a structured implementation plan
 
 ### Key Takeaways — Planning
 
-**Top tier (34-38/40) — Claude + GLM**: Opus (38) is the strongest overall planner. Sonnet and GLM (34) follow closely on codebase fit, architectural reasoning, and implementation-ready detail. Only Opus and Sonnet explicitly address both DTO mapping directions with concrete code: incoming `toEntity()` on the DTO and an outgoing controller `toDto()` helper — and both do so without any DTO leaking into the service layer.
+**Top tier (34-38/40) — Claude + GLM**: Opus scores 38/40. Sonnet and GLM each score 34/40 with strong codebase fit, architectural reasoning, and implementation-ready detail. Only Opus and Sonnet explicitly address both DTO mapping directions with concrete code and both do so without any DTO leaking into the service layer.
 
-**Strong mid-tier (29-31/40) — Best GPT plans + Kimi**: GPT 5.3 Codex Extra-High and GPT 5.4 Copilot tie at 31, Kimi scores 30, and GPT 5.3 Codex reaches 29. These plans are broadly solid, but missing list support and/or missing unassign support keep them below the top tier. GPT 5.4 Extra-High also lands at 29/40, but the extra time and daily-cap cost are not justified.
+**Strong mid-tier (29-31/40) — Best GPT plans + Kimi**: GPT 5.3 Codex Extra-High and GPT 5.4 Copilot score 31/40, Kimi scores 30/40, and GPT 5.3 Codex scores 29/40. These plans are broadly solid, but missing list support and/or missing unassign support keep them below the top tier. GPT 5.4 Extra-High also scores 29/40, with higher time and daily-cap usage.
 
-**Useful but weaker (24-28/40) — Lower GPT tiers + MiniMax + baseline**: GPT 5.4 (ChatGPT) scores 28 and MiniMax scores 27. GPT 5.3 Codex High reaches 25, while GPT 5.3 Codex Low, Devstral, and the Haiku baseline each score 24.
+**Useful but weaker (24-28/40) — Lower GPT tiers + MiniMax + baseline**: GPT 5.4 (ChatGPT) scores 28/40 and MiniMax scores 27/40. GPT 5.3 Codex High scores 25/40. GPT 5.3 Codex Low, Devstral, and the Haiku baseline each score 24/40.
 
-**Not viable (≤14/40) — Local and weak cloud**: The best local plan (Nemotron, 14) falls well below even the Haiku baseline (24). Local models consistently miss SQL schemas, `@Configuration` wiring, JSON model tests, and GDPR logging. DeepSeek invented requirements (optimistic locking, soft deletes) that would derail implementation.
+**Not viable (≤14/40) — Local and weak cloud**: Local plans score between 8/40 and 14/40, with Nemotron leading the local group at 14/40. These plans consistently miss SQL schemas, `@Configuration` wiring, JSON model tests, and GDPR logging. DeepSeek also invents requirements such as optimistic locking and soft deletes.
 
 > See [`devices-plan-evaluation.md`](devices-plan-evaluation.md) for detailed per-model analysis and scoring breakdown.
 
@@ -312,8 +312,8 @@ All models implemented the feature using the Claude Haiku 4.5 plan as a shared b
 
 - **GPT 5.4 and Claude Sonnet 4.6 tie at the top at 37/40** on Copilot. GPT 5.4 delivers the richest JPA model and code quality; Sonnet is the architecturally cleanest — the only model that validates cross-feature sensors through `SensorService` as required by the layering rules, with strong completeness and 9/10 across three criteria.
 - **GLM 4.7 is the best pay-per-use implementation at 35/40** — richest JPA sensor graph and strong compliance, though missing `@GeneratedValue` and Flyway schema misconfiguration prevent ITs from passing.
-- **GPT 5.4 (ChatGPT)** ranks 3rd at 36/40 — near-identical architecture to the Copilot run, with the best JSON-model test coverage of any implementation. The score difference vs. Copilot reflects a DTO-in-service compliance deduction and missing `@GeneratedValue`.
-- **GPT 5.3 Codex variants span a wider range than expected** — Default reaches 36/40 (perfect test coverage), Extra-High 35/40 (strongest tests but a critical layering violation), High 34/40, and Low 33/40. The default thinking level delivers the best value overall.
+- **GPT 5.4 (ChatGPT)** scores 36/40 and has near-identical architecture to the Copilot run, with the strongest JSON-model test coverage of any implementation.
+- **GPT 5.3 Codex variants** score 36/40 at default, 35/40 at Extra-High, 34/40 at High, and 33/40 at Low. The default thinking level offers the strongest score-to-cost ratio in this group.
 - **Haiku and Kimi are workable but flawed** — Haiku returns empty sensor lists despite the relationship being present, while Kimi ships a serious `findAll().stream().filter()` performance bug.
 - **Local models are not viable for this workflow** — the best local implementation scored 13/40 and still failed to produce a complete working feature.
 
@@ -482,7 +482,7 @@ The weekly cap only matters if you code intensively every day.
 **Diminishing returns on thinking**: For implementation, Default scores 36/40, Extra-High 35/40, High 34/40, and Low 33/40 — higher effort does not linearly improve quality; Default has the best score-to-cost ratio. For planning, Extra-High (31/40) edges out Default (29/40) but at 2× the daily cap cost. GPT 5.4 Extra-High planning reaches 29/40 versus 28/40 for default GPT 5.4, but takes 4× the time — **the default thinking level is still the best value overall**.
 
 **ChatGPT Plus vs. GitHub Copilot Pro**: Copilot Pro costs half as much ($10/mo vs. $20/mo), has no daily or weekly usage caps, and provides access to Claude models for planning (which score 34-38/40 vs. GPT's 24-31/40).
-The score differences between GPT 5.4 on Copilot (37/40 impl) and ChatGPT (36/40 impl) reflect a single compliance deduction (DTO-in-service) and a minor code quality gap (`@GeneratedValue`) — the pick should primarily be on pricing and platform features.
+The score differences between GPT 5.4 on Copilot (37/40 impl) and ChatGPT (36/40 impl) reflect a single compliance deduction and a minor code quality gap — the pick should primarily be on pricing and platform features.
 
 **ChatGPT Plus has one practical advantage for planning-heavy workflows**: at ~1% daily cap per planning prompt, you can run ~100 planning prompts per day essentially for free within the subscription — making it well-suited for iterative, interactive planning sessions with many back-and-forth prompts. On Copilot, each GPT 5.4 planning prompt costs 1 premium request (~$0.03), so an interactive session with 10+ prompts visibly erodes the 300-request monthly budget. If your workflow involves extended planning conversations rather than a single-shot plan, ChatGPT Plus removes that friction at the cost of lower planning quality (24-31/40 vs. 34-38/40 on Copilot with Claude).
 
@@ -504,8 +504,8 @@ For pay-per-use, **GLM 4.7** is the best cloud planner at ~$0.25 per plan (34/40
 
 ### Implementation: GPT 5.4 or Claude Sonnet 4.6 (GitHub Copilot)
 
-**GPT 5.4** scored 36-37/40 across access paths (37 on Copilot, 36 on ChatGPT) — the richest JPA model, full sensor details, DTO-owned transformation, comprehensive tests, and completes in ~9 minutes. 
-The score difference between Copilot and ChatGPT is likely non-deterministic; pick based on pricing (Copilot at $10/mo vs. ChatGPT at $20/mo with usage caps).
+**GPT 5.4** scores 37/40 on Copilot and 36/40 on ChatGPT. It delivers the richest JPA model, full sensor details, DTO-owned transformation, comprehensive tests, and completes in about 9 minutes.
+Pick between the two access paths based on pricing, usage caps, and platform features.
 
 **Sonnet 4.6** scores 37/40 — the only model that correctly used `SensorService` for cross-feature validation, the architecturally cleanest implementation. 
 It completes in ~10 minutes on the same Copilot subscription and is the better single-model choice when architectural correctness matters most.
