@@ -6,8 +6,8 @@
 |---|-----------|-------------|
 | 1 | **Completeness** | All required artifacts present and functional: migration, entity, repository, service, DTOs, controller, exception handler, configuration, AGENTS.md update |
 | 2 | **Test Coverage** | JSON model tests, repository ITs, service unit tests, controller tests — all present, passing, and meaningful |
-| 3 | **Compliance with AGENTS.md / Patterns** | Follows AGENTS.md rules and the linked pattern docs: no `@Service`/`@Component`, `@Configuration` wiring, package-protected repo, layering rule (SensorService not JpaSensorRepository), keyset pagination, GDPR logging, no unnecessary interface, DTO only in controller layer |
-| 4 | **Code Quality** | Naming conventions, proper imports (no FQN inline), efficient DB queries (no unnecessary duplicate reads, no `findAll().stream().filter()`), correct ID generation, correct timestamp type, correct migration filename format |
+| 3 | **Compliance with AGENTS.md / Patterns** | Follows AGENTS.md rules and the linked pattern docs: no `@Service`/`@Component`, `@Configuration` wiring, package-protected repo, layering rule (SensorService not JpaSensorRepository), GDPR logging, no unnecessary interface, DTO only in controller layer |
+| 4 | **Code Quality** | Naming conventions, proper imports (no FQN inline), efficient DB queries (no unnecessary duplicate reads, no `findAll().stream().filter()`), correct ID generation, correct timestamp type, correct migration filename format, `toEntity()` implemented on the DTO (AGENTS.md mandates this; outbound `toDto` direction is not required by AGENTS.md) |
 
 All scores are on a 1–10 scale.
 
@@ -27,6 +27,7 @@ All scores are on a 1–10 scale.
 - **Keyset pagination** preferred over offset.
 - **Test subclass pattern** (`ENTITY_TEST_DATA.md`) — use a test subclass or constructor, never reflection.
 - **AssertJ** assertions in all tests.
+- **DTO transformation placement** — AGENTS.md mandates a `toEntity()` method on inbound DTOs (e.g., `dto.toEntity()`). The outbound direction (`DeviceDto.from(entity)`) is a good practice but is not required by AGENTS.md and is not scored.
 
 ---
 
@@ -34,21 +35,30 @@ All scores are on a 1–10 scale.
 
 | Rank | Model | Completeness | Test Coverage | Compliance | Code Quality | **Total** |
 |------|-------|:------------:|:-------------:|:----------:|:------------:|:---------:|
-| 1 | Claude Sonnet 4.6 | 8 | 9 | 8 | 9 | **34** |
-| 2 | GLM 4.7 | 8 | 8 | 8 | 9 | **33** |
-| 3 | Claude Haiku 4.5 | 7 | 8 | 7 | 8 | **30** |
-| 4 | Claude Opus 4.6 | 6 | 8 | 6 | 8 | **28** |
-| 5 | Kimi K2.5 | 7 | 5 | 8 | 7 | **27** |
-| 6 | MiniMax 2.5 | 7 | 6 | 7 | 6 | **26** |
-| 7 | Devstral | 5 | 7 | 6 | 6 | **24** |
-| 8 | Devstral Small 2 (local) | 3 | 2 | 4 | 4 | **13** |
-| 9 | Nemotron 3 Nano (local) | 5 | 1 | 2 | 3 | **11** |
-| 10 | DeepSeek 3.2 | 2 | 1 | 2 | 3 | **8** |
-| 11 | Qwen Turbo | 1 | 1 | 1 | 1 | **4** |
+| 1 | GPT 5.4 (GitHub Copilot) | 10 | 9 | 9 | 9 | **37** |
+| 1 | Claude Sonnet 4.6 | 10 | 9 | 9 | 9 | **37** |
+| 3 | GPT 5.4 (ChatGPT) | 10 | 10 | 8 | 8 | **36** |
+| 3 | GPT 5.3 Codex | 9 | 10 | 9 | 8 | **36** |
+| 5 | GLM 4.7 | 9 | 8 | 9 | 9 | **35** |
+| 5 | GPT 5.3 Codex Extra-High | 10 | 9 | 7 | 9 | **35** |
+| 7 | GPT 5.3 Codex High | 9 | 9 | 8 | 8 | **34** |
+| 8 | GPT 5.3 Codex Low | 9 | 7 | 9 | 8 | **33** |
+| 9 | Claude Opus 4.6 | 8 | 8 | 8 | 8 | **32** |
+| 10 | Claude Haiku 4.5 | 8 | 8 | 7 | 8 | **31** |
+| 11 | Kimi K2.5 | 8 | 5 | 9 | 7 | **29** |
+| 12 | MiniMax 2.5 | 8 | 6 | 8 | 6 | **28** |
+| 13 | Devstral | 6 | 7 | 6 | 6 | **25** |
+| 14 | Devstral Small 2 (local) | 3 | 2 | 4 | 4 | **13** |
+| 15 | Nemotron 3 Nano (local) | 6 | 1 | 2 | 3 | **12** |
+| 16 | DeepSeek 3.2 | 2 | 1 | 2 | 3 | **8** |
+| 17 | Qwen Turbo | 1 | 1 | 1 | 1 | **4** |
 
-> **Note on Opus**: Full implementation but used `DataIntegrityViolationException` as a proxy for `SensorNotFoundException` instead of calling `SensorService`, bypassing the layering rule.
->
-> **Note on Devstral**: Architecturally complete but `getDeviceSensors()` explicitly returns a hardcoded empty list with a placeholder comment — sensors are never returned from any device response.
+### Key Differences by Category
+
+- **Top scorers**: GPT 5.4 (GitHub Copilot) and Claude Sonnet 4.6 tie at 37/40. Copilot has the strongest completeness and JPA relationship mapping but bypasses `SensorService` via `EntityManager.find(...)`. Sonnet is the only model to correctly use `SensorService` for cross-feature validation.
+- **High-quality tier**: GPT 5.4 (ChatGPT) and GPT 5.3 Codex tie at rank 3 with 36/40. GPT 5.4 (ChatGPT) has the best JSON-model test coverage; GPT 5.3 Codex achieves perfect test coverage but bypasses `SensorService` via a JPQL query directly against the `Sensor` entity. GLM 4.7 and GPT 5.3 Codex Extra-High follow at 35/40; GLM is the strongest pay-per-use option with the richest JPA sensor graph; Codex Extra-High has the most thorough tests of any GPT model but carries a critical layering violation (`JpaSensorLookupRepository`). GPT 5.3 Codex High trails at 34/40.
+- **Viable but clearly flawed**: Claude Opus 4.6, Claude Haiku 4.5, Kimi K2.5, MiniMax 2.5, and Devstral produce mostly complete implementations, but each has a significant weakness such as DB-exception-based validation, empty sensor responses, major performance issues, incomplete sensor payloads, or placeholder logic.
+- **Not viable for this workflow**: Devstral Small 2, Nemotron 3 Nano, DeepSeek 3.2, and Qwen Turbo fail to deliver a complete, reliable feature. The dominant failure modes are partial implementations, missing tests, broken schema choices, invalid project structure, or tool-call breakdowns.
 
 ---
 
@@ -57,15 +67,11 @@ All scores are on a 1–10 scale.
 ---
 
 ### 1. Claude Sonnet 4.6
-**Total: 34 / 40**
+**Total: 36 / 40**
 
-#### Completeness — 8/10
+#### Completeness — 10/10
 
 **Present:** Migration, Entity (UUID, `@GeneratedValue(UUID)`, `@PrePersist`/`@PreUpdate`, `Instant`), Repository (with keyset pagination queries), Service, DTOs (Create, Update, Device with `Sensor` list), Controller (CRUD + assign + get), Exception Handler, Configuration, AGENTS.md update.
-
-**Issues (-2):**
-- No `GET /api/devices` list endpoint — only `GET /{deviceId}`. A list with pagination is expected.
-- `UpdateDeviceDto` passed into `DeviceService.updateDevice()` — DTO leaks into the service layer, violating the rule that services work with entities only.
 
 #### Test Coverage — 9/10
 
@@ -74,7 +80,7 @@ All scores are on a 1–10 scale.
 **Issues (-1):**
 - No JSON model test for the nested `SensorDto` used inside `DeviceDto`.
 
-#### Compliance — 8/10
+#### Compliance — 9/10
 
 **Strengths:**
 - `@Configuration` bean wiring — no `@Service`/`@Component`.
@@ -86,9 +92,8 @@ All scores are on a 1–10 scale.
 - AGENTS.md updated.
 - Keyset pagination in repository.
 
-**Issues (-2):**
+**Issues (-1):**
 - `UpdateDeviceDto` passed to `DeviceService` — DTO in service layer violates AGENTS.md.
-- Migration filename `V202511141200__create_device_tables.sql` reuses the same timestamp as the existing `V202511141138__create_sensor_tables.sql` test migration (seconds differ but minute resolution is the same). Not a hard Flyway conflict but shows the timestamp was not genuinely generated.
 
 #### Code Quality — 9/10
 
@@ -100,19 +105,18 @@ All scores are on a 1–10 scale.
 - Efficient: uses `existsByIdDeviceIdAndIdSensorId` before saving — no unnecessary read-back.
 
 **Issues (-1):**
-- `UpdateDeviceDto.applyToEntity()` is called inside the service, meaning the DTO logic subtly bleeds past the controller boundary.
+- Migration filename `V202511141200__create_device_tables.sql` reuses the same timestamp minute as the existing `V202511141138__create_sensor_tables.sql` — not a hard Flyway conflict but shows the timestamp was not genuinely generated.
 
 ---
 
 ### 2. Claude Haiku 4.5
-**Total: 30 / 40**
+**Total: 31 / 40**
 
-#### Completeness — 7/10
+#### Completeness — 8/10
 
 **Present:** Migration, Entity (UUID, `@GeneratedValue(UUID)`, `@PrePersist`/`@PreUpdate`, `Instant`), Repository, Service, DTOs (Create, Update, Device, `SensorSummaryDto`), Controller (CRUD + assign + get), Exception Handler, Configuration, AGENTS.md update.
 
-**Issues (-3):**
-- No `GET /api/devices` list endpoint.
+**Issues (-2):**
 - `SensorNotFoundException` is not handled in `DeviceExceptionHandler` — if a sensor is not found during `assignSensor`, the generic 500 handler catches it.
 - `CreateDeviceDto` and `UpdateDeviceDto` are passed into `DeviceService` — DTOs in service layer.
 - **Sensor data never returned**: despite having `SensorSummaryDto` and `@OneToMany` on `Device`, the controller's `toDto(device)` calls `new DeviceDto(device)` which uses the no-sensors constructor — every device response returns an empty sensor list regardless of assignments.
@@ -148,23 +152,23 @@ All scores are on a 1–10 scale.
 - `TIMESTAMPTZ` in migration.
 - `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
 - No FQN inline imports.
+- `DeviceDto(Device device, List<SensorSummaryDto> sensors)` constructor — transformation logic lives in the DTO, the controller's `toDto()` method is just a thin wrapper delegating to the DTO constructor.
 
 **Issues (-2):**
 - Migration filename `V202511141200__create_device_tables.sql` uses a past timestamp.
-- Sensor data never surfaced in API response — `@OneToMany` relationship and `SensorSummaryDto` were defined but the controller ignores them, making the sensor assignment feature partially invisible to API consumers.
+- Sensor data never surfaced in API response — `@OneToMany` relationship and `SensorSummaryDto` were defined but the controller ignores them by calling the no-sensors constructor, making the sensor assignment feature partially invisible to API consumers.
 
 ---
 
 ### 3. GLM 4.7
-**Total: 33 / 40**
+**Total: 35 / 40**
 
-#### Completeness — 8/10
+#### Completeness — 9/10
 
 **Present:** Migration, Entity, Repository, Service, DTOs (Create, Update, Device), Controller (CRUD + assign + get + list), Exception Handler, Configuration, AGENTS.md update.
 
-**Issues (-2):**
+**Issues (-1):**
 - No `@GeneratedValue` on entity `@Id` — UUID must be assigned manually, causing null `id` on persist unless `@PrePersist` assigns it (not shown).
-- `getAllDevices()` returns `List<Device>` with no pagination — keyset pagination was planned but not wired into the controller list endpoint.
 
 #### Test Coverage — 8/10
 
@@ -174,7 +178,7 @@ All scores are on a 1–10 scale.
 - RepositoryITs failing — the missing `@GeneratedValue` causes null UUIDs on persist, breaking constraint checks in tests.
 - Flyway wrongly-named schema migration (reported from your findings) prevents ITs from running.
 
-#### Compliance — 8/10
+#### Compliance — 9/10
 
 **Strengths:**
 - `@Configuration` bean wiring.
@@ -185,9 +189,8 @@ All scores are on a 1–10 scale.
 - `ProblemDetail` responses.
 - AGENTS.md updated.
 
-**Issues (-2):**
+**Issues (-1):**
 - DTOs (`UpdateDeviceDto`) passed into `DeviceService.updateDevice()` — DTO in service layer.
-- No keyset pagination implemented in list endpoint.
 
 #### Code Quality — 9/10
 
@@ -196,7 +199,7 @@ All scores are on a 1–10 scale.
 - `TIMESTAMPTZ` in migration.
 - `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
 - Good method decomposition.
-- **Best relationship mapping**: `DeviceSensor` has a `@ManyToOne` back to `Sensor`, and the controller's `toDto()` walks `device.getSensors()` to build a full `SensorDto` list from the JPA graph — the richest sensor response of any implementation.
+- **Best relationship mapping**: `DeviceSensor` has a `@ManyToOne` back to `Sensor`, enabling navigation from device to full `SensorDto` list via the JPA graph — the richest sensor response of any implementation.
 
 **Issues (-1):**
 - Missing `@GeneratedValue` on entity `@Id` — critical for correct JPA behaviour.
@@ -206,14 +209,13 @@ All scores are on a 1–10 scale.
 ---
 
 ### 4. Kimi K2.5
-**Total: 27 / 40**
+**Total: 29 / 40**
 
-#### Completeness — 7/10
+#### Completeness — 8/10
 
 **Present:** Migration, Entity (Long ID with `@GeneratedValue(IDENTITY)`, `@PrePersist`/`@PreUpdate`, `Instant`), Repository, Service, DTOs (Create, Update, Device), Controller (CRUD + assign + get), Exception Handler, Configuration, AGENTS.md update.
 
-**Issues (-3):**
-- No `GET /api/devices` list endpoint.
+**Issues (-2):**
 - No JSON model DTO tests at all — `CreateDeviceDtoTest`, `DeviceDtoTest`, `UpdateDeviceDtoTest` are absent.
 - `UpdateDeviceDto` passed into `DeviceService` — DTO in service layer.
 
@@ -225,7 +227,7 @@ All scores are on a 1–10 scale.
 - No JSON model tests for DTOs (`CreateDeviceDtoTest`, `DeviceDtoTest`, `UpdateDeviceDtoTest` are absent).
 - RepositoryITs failing due to transaction/static data handling issues.
 
-#### Compliance — 8/10
+#### Compliance — 9/10
 
 **Strengths:**
 - `@Configuration` bean wiring.
@@ -235,9 +237,8 @@ All scores are on a 1–10 scale.
 - AGENTS.md updated.
 - `ProblemDetail` responses.
 
-**Issues (-2):**
+**Issues (-1):**
 - `UpdateDeviceDto` passed to service layer.
-- No keyset pagination in list operations.
 
 #### Code Quality — 7/10
 
@@ -254,15 +255,14 @@ All scores are on a 1–10 scale.
 ---
 
 ### 5. MiniMax 2.5
-**Total: 26 / 40**
+**Total: 28 / 40**
 
-#### Completeness — 7/10
+#### Completeness — 8/10
 
 **Present:** Migration, Entity, Repository, Service, DTOs (Create, Update, Device), Controller (CRUD + assign + get), Exception Handler, Configuration, AGENTS.md update.
 
-**Issues (-3):**
+**Issues (-2):**
 - No `@GeneratedValue` on `Device.id` — UUID must be assigned manually (same issue as GLM).
-- No `GET /api/devices` list endpoint.
 - No `JpaDeviceSensorRepositoryIT` — only `JpaDeviceRepositoryIT` present.
 
 #### Test Coverage — 6/10
@@ -274,7 +274,7 @@ All scores are on a 1–10 scale.
 - Missing `@GeneratedValue` will cause all ITs to fail on save (null UUID).
 - Sensor mapping not loaded when returning device — `toDto()` only shows device fields, not assigned sensors, because `getDeviceSensors` is not called on the response path.
 
-#### Compliance — 7/10
+#### Compliance — 8/10
 
 **Strengths:**
 - `@Configuration` bean wiring.
@@ -284,9 +284,8 @@ All scores are on a 1–10 scale.
 - AGENTS.md updated.
 - `ProblemDetail` responses.
 
-**Issues (-3):**
+**Issues (-2):**
 - `CreateDeviceDto` passed into `DeviceService.createDevice()` and `UpdateDeviceDto` passed into `updateDevice()` — DTOs in service layer.
-- No keyset pagination.
 - Missing `@GeneratedValue`.
 
 #### Code Quality — 6/10
@@ -294,6 +293,7 @@ All scores are on a 1–10 scale.
 **Strengths:**
 - `TIMESTAMPTZ` in migration.
 - `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
+- `DeviceDto.fromEntity()` — transformation encapsulated as a static factory on the DTO, which is the correct style.
 
 **Issues (-4):**
 - Missing `@GeneratedValue` — critical.
@@ -304,15 +304,13 @@ All scores are on a 1–10 scale.
 ---
 
 ### 6. Claude Opus 4.6
-**Total: 28 / 40**
+**Total: 32 / 40**
 
-#### Completeness — 6/10
+#### Completeness — 8/10
 
 **Present:** Migration, Entity, Repository, Service, DTOs (Create, Update, Device with nested `AssignedSensorDto`), Controller (CRUD + assign + get), Exception Handler, Configuration, AGENTS.md update.
 
-**Issues (-4):**
-- No `GET /api/devices` list endpoint.
-- No keyset pagination.
+**Issues (-2):**
 - `getDevice()` and `assignSensor()` make **two separate service calls** in the controller for device + sensors — results in two DB round-trips for what could be one.
 - Sensor response only contains `AssignedSensorDto(sensorId, assignedAt)` — no sensor name, type, or capabilities returned. API consumers cannot identify a sensor from the device response without a separate lookup.
 
@@ -322,9 +320,9 @@ All scores are on a 1–10 scale.
 
 **Issues (-2):**
 - `DeviceServiceTest` does not test the `getDeviceSensors` path thoroughly.
-- `JpaDeviceRepositoryIT` only tests basic CRUD — no pagination or `existsByName` queries tested.
+- `JpaDeviceRepositoryIT` only tests basic CRUD — no `existsByName` queries tested.
 
-#### Compliance — 6/10
+#### Compliance — 8/10
 
 **Strengths:**
 - `@Configuration` bean wiring.
@@ -334,11 +332,9 @@ All scores are on a 1–10 scale.
 - `ProblemDetail` responses.
 - AGENTS.md updated.
 
-**Issues (-4):**
+**Issues (-2):**
 - Does **not** use `SensorService` to validate sensor existence — instead catches `DataIntegrityViolationException` from the FK constraint violation. This is an unconventional approach that bypasses the layering rule and couples service behaviour to DB exception types.
 - `UpdateDeviceDto` passed into `DeviceService.updateDevice()` — DTO in service layer.
-- No keyset pagination.
-- No list endpoint.
 
 #### Code Quality — 8/10
 
@@ -352,21 +348,21 @@ All scores are on a 1–10 scale.
 **Issues (-2):**
 - `DataIntegrityViolationException` used as a proxy for sensor-not-found — fragile coupling to DB constraint behaviour.
 - Migration file timestamp (`V202603151000`) appears to be today's date — which is fine operationally but confirms the model generated a future/arbitrary date rather than a real one.
+- DTO transformation is done inline in the controller: `new DeviceDto(device, sensors)` assembled directly in each handler method rather than via a `DeviceDto.from(entity)` factory. Not counted as a separate deduction since the controller-side build is the smaller of the quality issues here.
 
 ---
 
 ### 7. Devstral
-**Total: 24 / 40**
+**Total: 25 / 40**
 
-#### Completeness — 5/10
+#### Completeness — 6/10
 
 **Present:** Migration, Entity (UUID, no `@GeneratedValue`), Repository, Service (partially), DTOs (Create, Update, Device), Controller (CRUD + assign + get), Exception Handler, Configuration, AGENTS.md update.
 
-**Issues (-5):**
+**Issues (-4):**
 - **Critical**: `getDeviceSensors()` explicitly returns `List.of()` with a comment: *"This would need to fetch the actual sensor entities from a sensor service — For now, we'll return an empty list as a placeholder."* Sensors are never returned from the device response.
 - No `@GeneratedValue` on `Device.id` — same issue as GLM and MiniMax.
 - `TIMESTAMP` not `TIMESTAMPTZ` in migration.
-- No `GET /api/devices` list endpoint.
 - No `@Valid` on controller request bodies.
 
 #### Test Coverage — 7/10
@@ -376,7 +372,7 @@ All scores are on a 1–10 scale.
 **Issues (-3):**
 - `DeviceEntityTest` is a misplaced IT test (extends `RepositoryIT`) for entity persistence — unusual structure.
 - `DeviceServiceTest` cannot meaningfully test sensor association since `getDeviceSensors` returns a hardcoded empty list.
-- `JpaDeviceRepositoryIT` is sparse — only basic CRUD, no pagination queries.
+- `JpaDeviceRepositoryIT` is sparse — only basic CRUD.
 
 #### Compliance — 6/10
 
@@ -400,6 +396,7 @@ All scores are on a 1–10 scale.
 - Readable structure and method decomposition.
 - Proper imports.
 - `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
+- `DeviceDto.fromEntityWithoutSensors()` — transformation encapsulated as a static factory on the DTO, which is the correct style.
 
 **Issues (-4):**
 - `getDeviceSensors()` returns empty list — fundamentally broken sensor retrieval.
@@ -466,19 +463,18 @@ All scores are on a 1–10 scale.
 ---
 
 ### 9. Nemotron 3 Nano
-**Total: 11 / 40**
+**Total: 12 / 40**
 
-#### Completeness — 5/10
+#### Completeness — 6/10
 
 **Present:** Migration (two files — one wrongly named), Entity, Repository, Service, Controller, DTOs (Create, Update, Device), `GlobalExceptionHandler` (in wrong package), `JpaDeviceSensorRepository`.
 
-**Issues (-5):**
+**Issues (-4):**
 - No `DeviceConfiguration` — `@Service` annotation used instead, violating AGENTS.md.
 - Two duplicate Flyway migration files: `V20260301_01_create_device_tables.sql` (wrong format) and `V202603012013__create_device_tables.sql` (correct format but both present) — Flyway will fail on the wrongly named file.
 - No AGENTS.md update.
 - No `DeviceExceptionHandler` scoped to device controller — uses a generic `GlobalExceptionHandler` placed in a separate `de.sfl.global` package (outside feature package).
 - `sensorId` in `DeviceSensorId` is `UUID` — but `sensors.id` is `BIGINT` (`Long`). The FK type is fundamentally wrong.
-- No keyset pagination.
 
 #### Test Coverage — 1/10
 
@@ -626,9 +622,277 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 
 ---
 
+### 12. GPT 5.4 (GitHub Copilot)
+**Total: 37 / 40**
+
+#### Completeness — 10/10
+
+**Present:** Migration (named constraints, `TIMESTAMPTZ`, UUID FK types), Entity (UUID, `@GeneratedValue`, `@PrePersist`/`@PreUpdate`, `Instant`), `DeviceSensor` with `@MapsId` and `@ManyToOne` back to `Sensor`, Repository (package-protected), Service, DTOs (Create, Update, Device with full `SensorDto` list), Controller (CRUD + assign + get), Exception Handler (scoped, `ProblemDetail`), Configuration, AGENTS.md update. `findDetailedById` with `JOIN FETCH` for eager sensor loading.
+
+#### Test Coverage — 9/10
+
+**Present:** `CreateDeviceDtoTest`, `DeviceDtoTest`, `UpdateDeviceDtoTest` (JSON model tests), `JpaDeviceRepositoryIT`, `JpaDeviceSensorRepositoryIT`, `DeviceServiceTest`, `DeviceControllerTest`. Uses `RepositoryIT` base class. AssertJ throughout. Test subclass pattern for entity ID assignment.
+
+**Issues (-1):**
+- No `SensorDtoTest` — the local `SensorDto` record (used inside `DeviceDto`) has no JSON marshalling test.
+
+#### Compliance — 9/10
+
+**Strengths:**
+- `@Configuration` bean wiring — no `@Service`/`@Component`.
+- Package-protected repositories.
+- No unnecessary interface.
+- `@RestControllerAdvice(assignableTypes = DeviceController.class)` — scoped advice.
+- `ProblemDetail` (RFC 7807) responses.
+- AGENTS.md updated.
+- Service works with entities — no DTO leakage into service layer.
+- Test subclass pattern.
+
+**Issues (-1):**
+- Does **not** use `SensorService` for cross-feature sensor validation — uses `EntityManager.find(Sensor.class, sensorId)` to load sensor entities directly. While this avoids accessing `JpaSensorRepository` (which is package-protected), it bypasses the service boundary that AGENTS.md requires.
+
+#### Code Quality — 9/10
+
+**Strengths:**
+- Richest JPA relationship mapping of the GPT group: `@OneToMany` on Device → DeviceSensor, `@ManyToOne` with `@MapsId` back to `Sensor`.
+- `JOIN FETCH` query in repository for eager sensor loading — efficient single-query approach.
+- Full sensor details (id, name, type, capabilities) returned in API response via `DeviceDto.from()` — transformation encapsulated in the DTO, not the controller.
+- Named constraints in migration (`CONSTRAINT pk_devices`, `CONSTRAINT fk_device_sensors_device`, etc.).
+- `TIMESTAMPTZ` in migration.
+- `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
+- Clean, readable method decomposition.
+
+**Issues (-1):**
+- `EntityManager.find` for sensor lookup is unconventional in a Spring Data JPA codebase — typically cross-feature validation goes through the service layer.
+
+---
+
+### 13. GPT 5.4 (ChatGPT)
+**Total: 36 / 40**
+
+#### Completeness — 10/10
+
+**Present:** Migration (named constraints, `TIMESTAMPTZ`), Entity (`@MapsId`, `@ManyToOne` back to `Sensor`), Repository (package-protected), Service, DTOs (Create, Update, Device with full local `SensorDto` list), Controller (CRUD + assign + get), Exception Handler (scoped, `ProblemDetail`), Configuration, AGENTS.md update. `findDetailedById` with `JOIN FETCH` for eager sensor loading.
+
+#### Test Coverage — 10/10
+
+**Present:** `CreateDeviceDtoTest`, `DeviceDtoTest`, `UpdateDeviceDtoTest`, `SensorDtoTest` (JSON model tests — including the nested `SensorDto`, which the GPT 5.4 (Copilot) run missed), `JpaDeviceRepositoryIT`, `JpaDeviceSensorRepositoryIT`, `DeviceServiceTest`, `DeviceControllerTest`. Uses `RepositoryIT` base class. AssertJ throughout. Test subclass pattern for entity ID assignment. Good scenario coverage across all paths.
+
+#### Compliance — 8/10
+
+**Strengths:**
+- `@Configuration` bean wiring — no `@Service`/`@Component`.
+- Package-protected repositories.
+- No unnecessary interface.
+- `@RestControllerAdvice(assignableTypes = DeviceController.class)` — scoped advice.
+- `ProblemDetail` (RFC 7807) responses.
+- AGENTS.md updated.
+- Test subclass pattern.
+- Local `SensorDto` in `devices` package avoids importing across feature packages.
+
+**Issues (-2):**
+- `UpdateDeviceDto` passed into `DeviceService.updateDevice()` — DTO in service layer.
+- Does **not** use `SensorService` for cross-feature sensor validation — uses `EntityManager.find(Sensor.class, sensorId)`, same approach as the GPT 5.4 (Copilot) run.
+
+#### Code Quality — 8/10
+
+**Strengths:**
+- Rich JPA model: `@OneToMany` on Device → DeviceSensor, `@ManyToOne` with `@MapsId` back to `Sensor`.
+- `JOIN FETCH` query in repository for eager sensor loading.
+- Full sensor details (id, name, type, capabilities) returned in API response via DTO factory methods — transformation encapsulated in the DTO.
+- Named constraints in migration.
+- `TIMESTAMPTZ` in migration.
+- `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
+- `@Transactional(readOnly = true)` at class level with explicit `@Transactional` on mutating methods — correct transaction hygiene.
+- `hasSensor(Long sensorId)` domain method and `assignSensor(Sensor)` on `Device` entity — richer domain model than the GPT 5.4 (Copilot) run.
+
+**Issues (-2):**
+- Missing `@GeneratedValue` on `Device.id` — UUID is assigned via a null-guard in `@PrePersist` (`if (id == null) id = UUID.randomUUID()`), which works but is less idiomatic than `@GeneratedValue(strategy = GenerationType.UUID)`.
+- `id UUID` in migration without `NOT NULL` — the GPT 5.4 (Copilot) run used `id UUID NOT NULL`.
+
+> **Comparison with GPT 5.4 (Copilot) (37/40)**: The two implementations are architecturally near-identical — same `EntityManager.find` strategy, same `JOIN FETCH` repository query, same DTO structures and test structure. The GPT 5.4 (ChatGPT) run trades the DTO-in-service leak (Compliance) and missing `@GeneratedValue` (Code Quality) for a richer domain model (idempotency logic in the entity, `@Transactional(readOnly = true)` class-level annotation) and a more complete test suite (adds `SensorDtoTest`). The net result is 36/40 vs 37/40 — GPT 5.4 (ChatGPT) is one point behind due to the DTO-in-service compliance deduction and missing `@GeneratedValue`, despite being marginally stronger on test coverage and transaction management.
+
+---
+
+### 14. GPT 5.3 Codex Extra-High
+**Total: 35 / 40**
+
+#### Completeness — 10/10
+
+**Present:** Migration (named constraints, `TIMESTAMPTZ`), Entity (UUID, `@GeneratedValue`), `DeviceSensor` with `(Device, Long sensorId)` constructor, Repository (package-protected), Service, DTOs (Create, Update, Device with full `SensorDto` list), Controller (CRUD + assign + get), Exception Handler (scoped, `ProblemDetail`), Configuration, AGENTS.md update. Full sensor details returned via `sensorLookupRepository.findByIdIn()`.
+
+#### Test Coverage — 9/10
+
+**Present:** Most thorough test coverage of all GPT models — symmetry tests, comprehensive DTO tests (marshalling and unmarshalling), rich repository IT coverage, `DeviceServiceTest`, `DeviceControllerTest`. Uses `RepositoryIT`. AssertJ throughout. Test subclass pattern.
+
+**Issues (-1):**
+- Minor redundancy across some test scenarios.
+
+#### Compliance — 7/10
+
+**Strengths:**
+- `@Configuration` bean wiring — no `@Service`/`@Component`.
+- Package-protected repositories.
+- `ProblemDetail` responses.
+- AGENTS.md updated.
+- Named constraints in migration.
+
+**Issues (-3):**
+- **Critical layering violation**: Creates `JpaSensorLookupRepository` — a Spring Data repository for the `Sensor` entity — inside the `devices` package. This explicitly violates AGENTS.md: *"Services should not directly access repositories from other service packages."* Creating a new repository in your own package for another feature's entity is worse than the spirit of the violation.
+- Mixed indentation (4-space/tab inconsistency from codebase standard).
+
+#### Code Quality — 8/10
+
+**Strengths:**
+- `TIMESTAMPTZ` in migration.
+- Named constraints.
+- `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
+- Full sensor details in API response (richest response alongside GPT 5.4 and Codex Low).
+- `findByIdIn()` for batch sensor loading — efficient.
+
+**Issues (-2):**
+- Mixed indentation (tabs vs. 4 spaces inconsistent with codebase).
+- `JpaSensorLookupRepository` creates an unauthorized access path to another feature's entity.
+
+---
+
+### 14. GPT 5.3 Codex
+**Total: 36 / 40**
+
+#### Completeness — 9/10
+
+**Present:** Migration (`TIMESTAMPTZ`), Entity (UUID, `@GeneratedValue`), `DeviceSensor`, Repository (package-protected), Service (with `getDeviceSensorIds()`), DTOs (Create, Update, Device with `List<Long> sensorIds`), Controller (CRUD + assign + get), Exception Handler (scoped, `ProblemDetail`), Configuration, AGENTS.md update.
+
+**Issues (-1):**
+- Migration missing named PK constraint (`id UUID PRIMARY KEY` inline instead of `CONSTRAINT pk_devices`).
+
+#### Test Coverage — 10/10
+
+**Present:** `CreateDeviceDtoTest`, `DeviceDtoTest`, `UpdateDeviceDtoTest` (JSON model tests), `JpaDeviceRepositoryIT`, `JpaDeviceSensorRepositoryIT`, `DeviceServiceTest`, `DeviceControllerTest`. Uses `RepositoryIT`. AssertJ throughout. Test subclass pattern.
+
+#### Compliance — 9/10
+
+**Strengths:**
+- `@Configuration` bean wiring — no `@Service`/`@Component`.
+- Package-protected repositories.
+- No unnecessary interface.
+- `@RestControllerAdvice(assignableTypes = DeviceController.class)` — scoped advice.
+- `ProblemDetail` responses.
+- AGENTS.md updated.
+
+**Issues (-1):**
+- Does **not** use `SensorService` for sensor validation — uses a custom `sensorExists()` JPQL query (`SELECT COUNT(s) > 0 FROM Sensor s WHERE s.id = :sensorId`) on `JpaDeviceSensorRepository`. This queries the `Sensor` entity directly from the devices package, bypassing the service boundary.
+
+#### Code Quality — 8/10
+
+**Strengths:**
+- `TIMESTAMPTZ` in migration.
+- `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
+- Proper imports — no FQN inline.
+- Clean method decomposition.
+
+**Issues (-2):**
+- Missing named PK constraint in migration.
+- Returns only `sensorIds` — no full sensor details in API response. API consumers cannot identify sensors without a separate lookup.
+
+---
+
+### 15. GPT 5.3 Codex Low
+**Total: 33 / 40**
+
+#### Completeness — 9/10
+
+**Present:** Migration (`TIMESTAMPTZ`), Entity (UUID, `@GeneratedValue`), Device with `@OneToMany` to `DeviceSensor`, Repository (package-protected), Service, DTOs (Create, Update, Device with `AssignedSensorDto` containing id, name, type, capabilities), Controller (CRUD + assign + get), Exception Handler, Configuration, AGENTS.md update. Full sensor details returned.
+
+**Issues (-1):**
+- `@GeneratedValue` without explicit strategy — relies on Hibernate default UUID generation. Works but less explicit than `@GeneratedValue(strategy = GenerationType.UUID)`.
+
+#### Test Coverage — 7/10
+
+**Present:** All test types — JSON model tests, `JpaDeviceRepositoryIT`, `JpaDeviceSensorRepositoryIT`, `DeviceServiceTest`, `DeviceControllerTest`. Uses `RepositoryIT`. AssertJ throughout. Test subclass pattern.
+
+**Issues (-3):**
+- `JpaDeviceSensorRepositoryIT` is sparse — only 1 test method.
+- `@AssertTrue` validation pattern on `UpdateDeviceDto` may not be thoroughly tested in controller tests.
+- Overall test depth is lighter than GPT 5.4 or Codex Extra-High.
+
+#### Compliance — 9/10
+
+**Strengths:**
+- `@Configuration` bean wiring — no `@Service`/`@Component`.
+- Package-protected repositories.
+- No unnecessary interface.
+- `ProblemDetail` responses.
+- AGENTS.md updated.
+- Full sensor details in response — richest API output among the Codex effort-level variants.
+- Custom `AssignedSensorNotFoundException` avoids cross-package dependency on `de.sfl.sensors.SensorNotFoundException`.
+
+**Issues (-1):**
+- Does **not** use `SensorService` — uses `EntityManager.find(Sensor.class, sensorId)` for sensor validation, same approach as GPT 5.4. Bypasses the service boundary.
+
+#### Code Quality — 8/10
+
+**Strengths:**
+- Full sensor details (id, name, type, capabilities) returned via `AssignedSensorDto`.
+- `@OneToMany` on Device — rich JPA relationship model.
+- `TIMESTAMPTZ` in migration.
+- `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
+
+**Issues (-2):**
+- `@GeneratedValue` without explicit strategy — less readable than explicit `GenerationType.UUID`.
+- `@AssertTrue` validation pattern on `UpdateDeviceDto` is unconventional — standard `@Pattern` or `@NotBlank` constraints are more typical and self-documenting.
+
+---
+
+### 16. GPT 5.3 Codex High
+**Total: 34 / 40**
+
+#### Completeness — 9/10
+
+**Present:** Migration (named constraints, `TIMESTAMPTZ`), Entity (UUID, `@GeneratedValue`), `DeviceSensor` with `@ManyToOne` to Device only (no `@ManyToOne` to `Sensor`), Repository (package-protected), Service, DTOs (Create, Update, Device with `List<Long> sensorIds`), Controller (CRUD + assign + get), Exception Handler (scoped, `ProblemDetail`), Configuration, AGENTS.md update.
+
+**Issues (-1):**
+- Returns `List<Long> sensorIds` only — no full sensor details. API consumers cannot identify sensors from the device response.
+
+#### Test Coverage — 9/10
+
+**Present:** All test types with comprehensive coverage — JSON model tests, `JpaDeviceRepositoryIT`, `JpaDeviceSensorRepositoryIT`, `DeviceServiceTest`, `DeviceControllerTest`. Uses `RepositoryIT`. AssertJ throughout. Test subclass pattern. Good scenario coverage across all test types.
+
+**Issues (-1):**
+- Native SQL sensor validation not extensively tested for edge cases.
+
+#### Compliance — 8/10
+
+**Strengths:**
+- `@Configuration` bean wiring — no `@Service`/`@Component`.
+- Package-protected repositories.
+- `@RestControllerAdvice(assignableTypes = DeviceController.class)` — scoped advice.
+- `ProblemDetail` responses.
+- AGENTS.md updated.
+- Named constraints in migration.
+
+**Issues (-2):**
+- Does **not** use `SensorService` — uses a native SQL query (`SELECT EXISTS (SELECT 1 FROM sensors WHERE id = :sensorId)`) for sensor validation. This directly queries the `sensors` table from the devices package, bypassing both `SensorService` and `JpaSensorRepository`.
+- Creates own `SensorNotFoundException` in `de.sfl.devices` instead of calling `SensorService` to validate.
+
+#### Code Quality — 8/10
+
+**Strengths:**
+- Named constraints in migration — among the best migration quality.
+- `TIMESTAMPTZ` in migration.
+- `Instant` timestamps, `@PrePersist`/`@PreUpdate`.
+- `DeviceSensor` constructor takes `(Device, Long sensorId)` — simple and explicit.
+- Comprehensive test structure.
+
+**Issues (-2):**
+- Native SQL query for sensor validation is fragile — tied to table and column names, no compile-time safety.
+- `DeviceSensor` has no `@ManyToOne` to `Sensor` entity — the JPA relationship is one-sided, making it impossible to navigate from device to full sensor details without a separate query.
+
+---
+
 ## Cross-Implementation Analysis
 
-### Common Strengths Across Top Implementations (Sonnet, Haiku, GLM, Kimi, MiniMax)
+### Common Strengths Across Top Implementations (Sonnet, Haiku, GLM, Kimi, MiniMax, GPT 5.4, GPT 5.3 variants)
 
 - All chose UUID for device IDs — a reasonable independent choice given the feature was new.
 - All used `TIMESTAMPTZ` in migration (except Devstral which used `TIMESTAMP`).
@@ -637,21 +901,24 @@ No JSON model tests, no repository integration tests extending `RepositoryIT`, n
 - All followed the `@PrePersist`/`@PreUpdate` and `Instant` pattern from `Sensor.java`.
 - All provided `ProblemDetail` RFC 7807 responses.
 - All scoped `@RestControllerAdvice` to `DeviceController.class`.
+- All GPT models used the test subclass pattern for entity ID assignment in tests.
 
 ### Recurring Issues Across Multiple Implementations
 
 | Issue | Implementations Affected |
 |-------|--------------------------|
-| DTOs passed to service layer | Sonnet, Haiku, GLM, Kimi, MiniMax, Devstral, Opus |
-| No `GET /api/devices` list endpoint | Sonnet, Haiku, Kimi, MiniMax, Opus, Devstral |
-| Missing `@GeneratedValue` on UUID entity | GLM, MiniMax, Devstral |
+| No `SensorService` for cross-feature validation | All GPT models (5.4 gh, 5.4 oai, Codex, Codex Low, Codex High, Codex xHigh), Haiku, Opus, Devstral |
+| DTOs passed to service layer | Sonnet, Haiku, GLM, Kimi, MiniMax, Devstral, Opus, GPT 5.4 (oai) |
+| Missing `@GeneratedValue` on UUID entity | GLM, MiniMax, Devstral, GPT 5.4 (oai) |
 | `TIMESTAMP` instead of `TIMESTAMPTZ` | Devstral, Devstral-Small |
-| Missing named FK/PK constraints | Devstral, Devstral-Small, DeepSeek |
+| Missing named FK/PK constraints | Devstral, Devstral-Small, DeepSeek, GPT 5.3 Codex |
 | Single underscore in migration filename | Devstral-Small (single `_`) |
 | Wrong `sensorId` type in junction table | Nemotron, Devstral-Small |
 | Sensor loading returns empty list | Devstral |
 | No JSON model DTO tests | Kimi |
 | `@Service`/Lombok | Nemotron |
+| Layering violation via custom repository | GPT 5.3 Codex Extra-High (`JpaSensorLookupRepository`) |
+| Native SQL for cross-feature query | GPT 5.3 Codex High |
 
 ### Sensor Response Quality
 
@@ -660,29 +927,51 @@ A key differentiator across implementations is whether assigned sensor data is m
 | Quality | Model | Sensor data returned |
 |---------|-------|----------------------|
 | Full sensor details | Sonnet, GLM | Full `SensorDto` (id, name, type, capabilities) via `SensorService` or JPA graph traversal |
+| Full sensor details | GPT 5.4 (gh), GPT 5.4 (oai), GPT 5.3 Codex Low | Full `SensorDto`/`AssignedSensorDto` via `EntityManager.find` and JPA relationship |
+| Full sensor details | GPT 5.3 Codex Extra-High | Full `SensorDto` via `JpaSensorLookupRepository` (layering violation) |
 | Partial data | Opus | `AssignedSensorDto(sensorId, assignedAt)` — identifies which sensor but no details |
+| IDs only | GPT 5.3 Codex, GPT 5.3 Codex High | `List<Long> sensorIds` — no sensor details |
+| IDs only | Kimi | `List<Long> sensorIds` — no sensor details |
 | Broken / empty | Haiku | `@OneToMany` defined but `toDto()` ignores it — always returns empty list |
 | Broken / empty | MiniMax | Sensor IDs mapped but name/type/capabilities all null |
 | Broken / placeholder | Devstral | `List.of()` hardcoded in service with an explicit TODO comment |
-| IDs only | Kimi | `List<Long> sensorIds` — no sensor details |
 
 **Sonnet** resolves sensors through `SensorService`, which is the architecturally correct approach (respects the cross-feature service boundary). **GLM** uses JPA relationship traversal (`@ManyToOne` on `DeviceSensor` → `Sensor`), which is also a valid approach and produces the richest graph in a single DB query. Both are valid; Sonnet's approach is more aligned with the AGENTS.md layering rules since it goes through the service boundary.
 
+### DTO Transformation Placement
+
+AGENTS.md mandates a `toEntity()` method on inbound DTOs. The outbound direction (`DeviceDto.from(entity)`) is a recommended practice but not required by AGENTS.md and was not scored. The table below documents each model's approach for reference.
+
+| Approach | Models | Notes |
+|----------|--------|-------|
+| **DTO-owned factory/constructor** (`DeviceDto.from()`, `dto.toEntity()`, DTO constructor) | GPT 5.4 (gh), GPT 5.4 (oai), Haiku, MiniMax, Devstral | Cleaner style; controller delegates to the DTO |
+| **Controller-side inline mapping** (`toDto(entity)` with field extraction on controller) | Sonnet, GLM, Opus, Nemotron | Mapping logic lives in the controller, not the DTO — not penalized |
+| **Controller wrapper → DTO factory** (controller `toDto()` delegates to `DeviceDto.from()`) | GPT 5.3 Codex, Codex Low, Codex High, Codex XHigh | Functionally equivalent to DTO-owned since the mapping logic is in the DTO, but the wrapper adds indirection |
+
+**GPT 5.4 (Copilot)** is the clearest example of the DTO-owned style — `DeviceDto.from(entity)` with all mapping logic in the DTO. **Haiku** also uses DTO-owned transformation — its controller `toDto()` wrapper delegates to `new DeviceDto(device)`, keeping mapping logic inside the DTO constructor. **Sonnet**, **GLM**, **Opus**, and **Nemotron** placed the field-extraction logic directly in the controller — this is a style observation, not a scored deduction, since AGENTS.md only mandates `toEntity()`. **MiniMax** used `DeviceDto.fromEntity()` — the right pattern — but the implementation was broken because the mapped fields were null. **Devstral** used `DeviceDto.fromEntityWithoutSensors()` — DTO-owned factory — though the name reflects the incomplete sensor retrieval. The four GPT 5.3 Codex variants use a controller `toDto()` wrapper that delegates to `DeviceDto.from()` — functionally equivalent to DTO-owned since the mapping logic is in the DTO.
+
 ### Key Differentiators
 
-- **Sonnet** is the most complete working implementation. Its main weakness is the DTO-in-service pattern (present in nearly all models). It is the only model that correctly used `SensorService` for cross-feature sensor validation.
-- **GLM** rose to #2 on the strength of its relationship mapping (full JPA graph, richest sensor response) and broad test coverage. Its showstopper bugs (missing `@GeneratedValue`, Flyway schema misconfiguration) prevent the tests from passing, but the code structure and design quality are high.
-- **Haiku** fell to #3 due to a subtle but critical bug: despite defining `SensorSummaryDto` and a full `@OneToMany` relationship, the controller always calls the no-sensors constructor — the feature is architecturally present but functionally broken for API consumers.
-- **Opus** is architecturally unusual — it chose a `DataIntegrityViolationException` catch as a proxy for sensor validation, which is fragile and bypasses the layering rule. Despite being a top-tier plan producer, the implementation reflects less codebase alignment than Sonnet or GLM.
-- **Kimi** suffers from a critical performance bug (`findAll().stream().filter()`) and missing DTO tests, but the core structure is otherwise sound.
-- **MiniMax** has the unnecessary-read-back bug in `assignSensor`, missing `@GeneratedValue`, and a misleading sensor response that includes structurally correct but data-empty sensor objects.
-- **Devstral (cloud)** produced working code structure but with the sensor retrieval left as a placeholder — a fundamental functional gap acknowledged in the code itself.
+- **GPT 5.4 (GitHub Copilot)** is the top scorer at 37/40 — the richest JPA model (`@MapsId`, `JOIN FETCH`, full `@OneToMany`), no DTO-in-service leakage, DTO-owned transformation via `DeviceDto.from()`, `@GeneratedValue` present, and comprehensive tests. Its `EntityManager.find` approach for sensor validation is unconventional but avoids accessing package-protected repositories.
+- **GPT 5.4 (ChatGPT)** ranks 3rd at 36/40. Near-identical architecture to the GPT 5.4 (Copilot) run; the one-point gap vs. Copilot reflects the DTO-in-service compliance deduction and missing `@GeneratedValue`, offset by an additional `SensorDtoTest` and richer domain model.
+- **GLM 4.7** ranks 4th at 35/40. Its showstopper bugs (missing `@GeneratedValue`, Flyway schema misconfiguration) prevent ITs from passing, but the JPA relationship model and sensor response quality are among the strongest — `@ManyToOne` on `DeviceSensor` → `Sensor` gives the richest graph in a single DB query.
+- **Claude Sonnet 4.6** ties GPT 5.4 (Copilot) at 37/40 — the only model to correctly use `SensorService` for cross-feature sensor validation, with 10/10 Completeness and 9/10 across Test Coverage and Compliance.
+- **GPT 5.4 (ChatGPT) and GPT 5.3 Codex** tie at rank 3 with 36/40. GPT 5.4 (ChatGPT) is near-identical to the Copilot run with the best JSON-model test coverage. GPT 5.3 Codex achieves 10/10 test coverage and 9/10 compliance — its single deduction is bypassing `SensorService` via a JPQL query directly against the `Sensor` entity.
+- **GPT 5.3 Codex Extra-High** ranks 5th at 35/40. It invested the most effort time (20 min) and produced the most thorough test suite of any GPT model, but created `JpaSensorLookupRepository` — the most explicit layering violation in the evaluation. Codex High trails at 34/40. Codex Low (33/40) returns full sensor details, unlike Default and High which return only IDs.
+- **GPT 5.3 Codex Low** scored 33/40. Each Codex variant chose a different sensor validation strategy (JPQL, EntityManager, native SQL) — all bypass `SensorService`. This suggests GPT models internalized the "services work with entities" rule but consistently missed the cross-feature layering rule.
+- **Claude Opus 4.6** is 9th at 32/40. Architecturally unusual — it chose a `DataIntegrityViolationException` catch as a proxy for sensor validation, which is fragile and bypasses the layering rule. Despite being a top-tier plan producer, the implementation reflects less codebase alignment than Sonnet or GPT 5.4.
+- **Haiku** is 10th at 31/40. The primary quality issue is a subtle but critical bug: the controller always calls the no-sensors DTO constructor despite a full `@OneToMany` relationship being defined — every device response returns an empty sensor list regardless of assignments. This is a functional gap that makes the sensor assignment feature invisible to API consumers.
+- **Kimi** (29/40) suffers from a critical performance bug (`findAll().stream().filter()`) and missing DTO tests, but the core structure is otherwise sound.
+- **MiniMax** (28/40) has the unnecessary-read-back bug in `assignSensor`, missing `@GeneratedValue`, and a misleading sensor response that includes structurally correct but data-empty sensor objects.
+- **Devstral (cloud)** (25/40) produced working code structure but with the sensor retrieval left as a placeholder — a fundamental functional gap acknowledged in the code itself.
 - **Local models (Devstral-Small, Nemotron, Qwen)** all failed to produce complete implementations. Devstral-Small produced a reasonable data layer; Nemotron produced a structurally broken implementation with wrong types; Qwen produced two incompatible partial implementations in invalid directory locations — neither compiled, both violated foundational AGENTS.md rules, and the model partially reimplemented the existing sensors feature from scratch using the wrong Jakarta namespace.
 
 ### Migration Filename Compliance
 
-All models that produced a migration used the double-underscore separator correctly **except Devstral-Small** (`V202603071400_create_device_tables.sql` — single underscore). The timestamp format was generally correct though some used past dates suggesting copy-paste from existing migrations rather than generating a fresh timestamp.
+All models that produced a migration used the double-underscore separator correctly **except Devstral-Small** (`V202603071400_create_device_tables.sql` — single underscore). The timestamp format was generally correct though some used past dates suggesting copy-paste from existing migrations rather than generating a fresh timestamp. All five GPT models used the correct double-underscore format.
 
 ### The DTO-in-Service Anti-Pattern
 
-The most pervasive single violation across all models is passing DTOs into the service layer. Only **Sonnet** used `SensorService` correctly for cross-feature validation. Every model that produced a service leaked at least one DTO type into it. This suggests that while models read and understood the instruction *"Services should work with the entity model"*, they did not consistently apply it to all service methods — particularly `updateDevice`.
+The most pervasive single violation across the evaluation models is passing DTOs into the service layer. Every non-GPT model that produced a service leaked at least one DTO type into it. Only **GPT 5.4 (Copilot)** and the GPT 5.3 Codex models consistently avoided the pattern; **Sonnet** used `UpdateDeviceDto.applyToEntity()` from the service, which is a boundary violation even though the transformation logic itself is correctly encapsulated in the DTO.
+
+**The GPT 5.4 (Copilot) run avoids the DTO-in-service pattern** — its service methods accept entity parameters or primitive types, not DTOs. The **GPT 5.4 (ChatGPT) run**, however, did pass `UpdateDeviceDto` into the service, suggesting this is not a guaranteed property of the model but rather a run-to-run variation. The five GPT 5.3 Codex models also generally avoided DTOs in service methods. Regardless, both GPT 5.4 runs share a universal violation: **neither uses `SensorService`** for cross-feature sensor validation, opting instead for `EntityManager.find`. This suggests that while GPT 5.4 internalized the "services work with entities" rule, it consistently missed the cross-feature layering rule that services should go through other feature services, not directly access other features' entities or tables.
