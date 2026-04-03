@@ -35,6 +35,7 @@ Before evaluating, the following facts from the codebase were established as gro
 - **AGENTS.md must be updated** with the new feature entry.
 - **Layering rule**: Services must not access repositories from other feature packages — they must call `SensorService` to validate sensor existence, not `JpaSensorRepository` directly.
 - **DTO mapping style**: `AGENTS.md` requires `dto.toEntity()` for incoming mapping; plans that omit this are penalized. Outgoing mapping (`DeviceDto.from(entity)` or controller `toDto()`) is not required by AGENTS.md — plans that address it earn credit, but its absence is not a deduction.
+- **Top-end completeness standard**: A production-complete device feature is expected to include a device list endpoint (`GET /api/devices`) using keyset pagination, and a way to unassign sensors from devices. These are treated as completeness expectations for high scores, not bonus credit.
 
 ---
 
@@ -43,19 +44,19 @@ Before evaluating, the following facts from the codebase were established as gro
 | Rank | Model | AGENTS.md Compliance | Codebase Fit | Completeness | Detail Level | **Total** |
 |------|-------|:--------------------:|:------------:|:------------:|:------------:|:---------:|
 | 1  | Claude Opus 4.6 | 10 | 10 | 9 | 9 | **38** |
-| 2  | Claude Sonnet 4.6 | 9 | 10 | 8 | 9 | **36** |
+| 2  | Claude Sonnet 4.6 | 9 | 10 | 6 | 9 | **34** |
 | 3  | GLM 4.7 | 8 | 8 | 9 | 9 | **34** |
 | 4  | GPT 5.3 Codex Extra-High | 9 | 8 | 7 | 7 | **31** |
 | 4  | GPT 5.4 (GitHub Copilot) | 9 | 8 | 7 | 7 | **31** |
-| 6  | GPT 5.3 Codex | 9 | 7 | 7 | 7 | **30** |
 | 6  | Kimi K2.5 | 8 | 8 | 8 | 6 | **30** |
-| 8  | GPT 5.4 (ChatGPT) | 8 | 7 | 7 | 7 | **29** |
+| 7  | GPT 5.3 Codex | 9 | 7 | 6 | 7 | **29** |
 | 8  | GPT 5.4 Extra-High | 8 | 7 | 7 | 7 | **29** |
+| 9  | GPT 5.4 (ChatGPT) | 8 | 7 | 6 | 7 | **28** |
 | 10 | MiniMax 2.5 | 6 | 8 | 7 | 6 | **27** |
-| 11 | GPT 5.3 Codex High | 8 | 6 | 6 | 6 | **26** |
-| 11 | Devstral | 5 | 7 | 7 | 7 | **26** |
-| 13 | GPT 5.3 Codex Low | 7 | 6 | 6 | 6 | **25** |
-| —  | Claude Haiku 4.5 *(baseline)* | 5 | 4 | 8 | 8 | **25** |
+| 11 | GPT 5.3 Codex High | 8 | 6 | 5 | 6 | **25** |
+| 12 | GPT 5.3 Codex Low | 7 | 6 | 5 | 6 | **24** |
+| 12 | Devstral | 5 | 7 | 5 | 7 | **24** |
+| —  | Claude Haiku 4.5 *(baseline)* | 5 | 4 | 7 | 8 | **24** |
 | 14 | Nemotron 3 Nano 30B (local) | 3 | 2 | 5 | 4 | **14** |
 | 15 | DeepSeek 3.2 | 3 | 2 | 4 | 3 | **12** |
 | 15 | Devstral Small 2 25.12 (local) | 3 | 2 | 5 | 2 | **12** |
@@ -64,10 +65,10 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ### Key Differences by Category
 
-- **Top tier**: Claude Opus 4.6 (38) leads with perfect AGENTS.md Compliance and Codebase Fit scores. Claude Sonnet 4.6 (36) follows closely, and GLM 4.7 (34) rounds out the top three. All three combine codebase-specific detail, solid architecture, and implementation-ready guidance.
-- **Strong mid-tier**: GPT 5.3 Codex Extra-High and GPT 5.4 (Copilot) tie at 31, followed by GPT 5.3 Codex and Kimi K2.5 tied at 30. These plans demonstrate strong AGENTS.md compliance but are held back by missing list endpoints and less codebase-specific detail. Kimi has slightly stronger codebase fit but weaker detail and carries the JpaSensorRepository layering violation. The remaining GPT 5.4 variants score 29; extra thinking time (Extra-High effort) does not bring a noticeable improvement over the default runs.
-- **Useful but weaker**: MiniMax 2.5, Devstral, GPT 5.3 Codex High, and GPT 5.3 Codex Low cover most required artifacts, but lose points through generic guidance, cross-package layering violations, missing list endpoints, under-specified persistence choices, or thinner implementation detail.
-- **Not reliable enough**: local plans, DeepSeek, GPT-OSS, and Qwen remain too incomplete, too generic, or too inconsistent to serve as strong implementation guides.
+- **Top tier**: Claude Opus 4.6 (38) provides the strongest overall plan. Claude Sonnet 4.6 and GLM 4.7 (34) follow as high-quality plans with strong architecture and codebase alignment; Sonnet's main weakness is the missing `GET /api/devices` endpoint.
+- **Strong mid-tier**: GPT 5.3 Codex Extra-High and GPT 5.4 (Copilot) tie at 31, followed by Kimi K2.5 at 30 and GPT 5.3 Codex plus GPT 5.4 Extra-High at 29. These plans are broadly solid, but missing list support and/or missing unassign support keep them below the top tier.
+- **Useful but weaker**: GPT 5.4 (ChatGPT), MiniMax 2.5, GPT 5.3 Codex High, GPT 5.3 Codex Low, and Devstral cover substantial parts of the feature, but they are less complete or less codebase-aligned.
+- **Not reliable enough**: the local plans, DeepSeek, GPT-OSS, and Qwen are too incomplete, too generic, or too inconsistent to serve as strong implementation guides.
 
 > **Note:** The baseline (`devices-feature.md`, Claude Haiku 4.5) is included in the ranking row above for direct comparison. Local LLM plans are marked with *(local)*.
 
@@ -78,7 +79,7 @@ Before evaluating, the following facts from the codebase were established as gro
 ---
 
 ### Baseline: Claude Haiku 4.5
-**Total: 25 / 40** *(reference baseline)*
+**Total: 24 / 40** *(reference baseline)*
 
 #### AGENTS.md Compliance — 5/10
 
@@ -116,14 +117,15 @@ Before evaluating, the following facts from the codebase were established as gro
 - `LocalDateTime` in DTO — existing code uses `Instant`.
 - Separate `DeviceSensorId` embedded key class — adds complexity inconsistent with the simpler `@ManyToMany` / `@JoinTable` pattern used by top plans.
 
-#### Completeness — 8/10
+#### Completeness — 7/10
 
 **Strengths:**
 - Migration SQL, Entity, Repository (two repos), Service (all methods), DTOs (three), Controller (5 endpoints), Exception Handler, Configuration, JSON model tests (3), Repository IT (two), Service test, Controller test, AGENTS.md update, full implementation sequence in 7 phases.
 
-**Issues (-2):**
+**Issues (-3):**
 - No `mvn verify` instruction in the sequence.
-- No keyset pagination / `PageResult<T>` — `getAllDevices()` returns `List<Device>` with no pagination.
+- No `GET /api/devices` list endpoint is planned; pagination is deferred to future enhancements instead of being part of the feature plan.
+- No way to unassign sensors from devices — only `PUT /{deviceId}/sensors/{sensorId}` assignment is planned.
 
 #### Detail Level — 8/10
 
@@ -197,7 +199,7 @@ Before evaluating, the following facts from the codebase were established as gro
 ---
 
 ### 2. Claude Sonnet 4.6
-**Total: 36 / 40**
+**Total: 34 / 40**
 
 #### AGENTS.md Compliance — 9/10
 
@@ -206,7 +208,6 @@ Before evaluating, the following facts from the codebase were established as gro
 - Package-protected repository.
 - `@Configuration` bean wiring.
 - No unnecessary interface.
-- Keyset pagination mentioned.
 - Cross-cutting concerns section explicitly addresses: layering (calls `SensorService`, not `JpaSensorRepository`), idempotency, `@Transactional` on mutating methods, no `@Component`/`@Service`, DTOs in controller layer only.
 - `AssignSensorsDto` with full-replace semantics — passing an empty or reduced set effectively supports unassigning sensors, covering a common real-world operation not explicitly required by the prompt but clearly useful.
 - `ProblemDetail` (RFC 7807) for exception handler.
@@ -228,11 +229,12 @@ Before evaluating, the following facts from the codebase were established as gro
 - No Lombok.
 - `DeviceDto` returns `Set<Long> sensorIds` — a legitimate design choice (lighter payload, avoids coupling) that the prompt does not prescribe against.
 
-#### Completeness — 8/10
+#### Completeness — 6/10
 
 **Covered:** Migration, Entity, Repository, Exceptions, Service, DTOs (Create, Update, Assign, Device), Controller, Exception Handler, Configuration, JSON model tests (all DTOs), Repository IT, Service unit test, Controller test, AGENTS.md update, implementation order.
 
-**Issues (-2):**
+**Issues (-4):**
+- No `GET /api/devices` list endpoint is planned, so the feature is not production-complete under the completeness rubric.
 - No `mvn verify` step at the end.
 - No mention of `existsByNameAndIdNot` for update uniqueness, making the update path implementation-ready gap.
 
@@ -271,7 +273,7 @@ Before evaluating, the following facts from the codebase were established as gro
 - `ProblemDetail` responses.
 - Test class names follow the pattern exactly.
 - References `RepositoryIT`.
-- `AssignSensorsDto` included — full-replace semantics implicitly support unassigning sensors by sending a reduced set.
+- `AssignSensorsDto` included — full-replace semantics support unassigning sensors by sending a reduced set, but `@NotEmpty` on the DTO means the plan does not support clearing all assignments in a single request.
 - `@RestControllerAdvice(assignableTypes = DeviceController.class)`.
 - Per-scenario test descriptions.
 - GDPR compliance note in Design Considerations ("Never log device IDs or personal data").
@@ -364,7 +366,7 @@ Before evaluating, the following facts from the codebase were established as gro
 ---
 
 ### 5. GPT 5.3 Codex
-**Total: 30 / 40**
+**Total: 29 / 40**
 
 #### AGENTS.md Compliance — 9/10
 
@@ -388,12 +390,13 @@ Before evaluating, the following facts from the codebase were established as gro
 - No explicit reference of extending `RepositoryIT`.
 - Limited alignment with existing DTO transformation conventions.
 
-#### Completeness — 7/10
+#### Completeness — 6/10
 
 **Covered:** Migration, package structure, entity, service, repository, DTOs, exception handler, controller, tests, AGENTS.md update, and verification.
 
-**Issues (-3):**
+**Issues (-4):**
 - No GET list endpoint planned — a significant gap that leaves the device API functionally incomplete (-2).
+- No way to unassign sensors from devices — the plan only proposes `PUT /api/devices/{deviceId}/sensors/{sensorId}`.
 - Uniqueness handling is mentioned but not fully translated into repository/query details.
 
 #### Detail Level — 7/10
@@ -410,7 +413,7 @@ Before evaluating, the following facts from the codebase were established as gro
 ---
 
 ### 6. GPT 5.4 (ChatGPT)
-**Total: 29 / 40**
+**Total: 28 / 40**
 
 #### AGENTS.md Compliance — 8/10
 
@@ -434,12 +437,13 @@ Before evaluating, the following facts from the codebase were established as gro
 - Does not explicitly anchor timestamps, repository style, or test base classes to the existing codebase.
 - Leaves sensor cardinality and payload design partly open.
 
-#### Completeness — 7/10
+#### Completeness — 6/10
 
 **Covered:** Endpoints, DTOs, service, repository, configuration, migration, tests, AGENTS.md update, and acceptance criteria.
 
-**Issues (-3):**
+**Issues (-4):**
 - No list endpoint planned — a significant gap that leaves the device API functionally incomplete (-2).
+- No way to unassign sensors from devices — the plan only proposes `PUT /api/devices/{deviceId}/sensors/{sensorId}`.
 - Several implementation choices remain undecided rather than fully planned.
 
 #### Detail Level — 7/10
@@ -541,7 +545,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 **Issues (-3):**
 - No GET list endpoint planned — a significant gap that leaves the device API functionally incomplete (-2).
-- Sensor assignment cardinality (one-device-per-sensor vs. many-to-many) is not explicitly discussed, leaving that design decision to the implementer.
+- No way to unassign sensors from devices — the plan only proposes `PUT /api/devices/{deviceId}/sensors/{sensorId}`.
 
 #### Detail Level — 7/10
 
@@ -551,7 +555,7 @@ Before evaluating, the following facts from the codebase were established as gro
 
 **Issues (-3):**
 - No code snippets.
-- Important DB and repository details remain abstract.
+- Repository and service details remain abstract despite the strong schema section.
 - DTO mapping guidance is absent.
 
 ---
@@ -685,7 +689,7 @@ Before evaluating, the following facts from the codebase were established as gro
 ---
 
 ### 11. GPT 5.3 Codex High
-**Total: 26 / 40**
+**Total: 25 / 40**
 
 #### AGENTS.md Compliance — 8/10
 
@@ -709,12 +713,13 @@ Before evaluating, the following facts from the codebase were established as gro
 - No `RepositoryIT` reference.
 - Leaves several persistence and mapping decisions at a conceptual level.
 
-#### Completeness — 6/10
+#### Completeness — 5/10
 
 **Covered:** Core CRUD endpoints, repository, service, DTOs, tests, migration, and AGENTS update.
 
-**Issues (-4):**
+**Issues (-5):**
 - No list endpoint planned — a significant gap that leaves the device API functionally incomplete (-2).
+- No way to unassign sensors from devices — the plan only proposes `PUT /api/devices/{deviceId}/sensors/{sensorId}`.
 - No explicit repository IT base-class alignment.
 - Verification is weaker than in the stronger GPT plans.
 
@@ -733,7 +738,7 @@ Before evaluating, the following facts from the codebase were established as gro
 ---
 
 ### 12. GPT 5.3 Codex Low
-**Total: 25 / 40**
+**Total: 24 / 40**
 
 #### AGENTS.md Compliance — 7/10
 
@@ -760,12 +765,13 @@ Before evaluating, the following facts from the codebase were established as gro
 - No mention of named constraints, `TIMESTAMPTZ`, `RepositoryIT`, or `PageResult<T>`.
 - DTO naming is less aligned with the codebase.
 
-#### Completeness — 6/10
+#### Completeness — 5/10
 
 **Covered:** Feature package, API contract, entity, migration, service, repository, DTOs, configuration, tests, AGENTS.md update, and delivery sequence.
 
-**Issues (-4):**
+**Issues (-5):**
 - No list endpoint planned — a significant gap that leaves the device API functionally incomplete (-2).
+- No way to unassign sensors from devices — the plan only proposes `PUT /api/devices/{deviceId}/sensors/{sensorId}`.
 - Persistence strategy for sensor assignment is not cleanly settled.
 - Missing codebase-specific repository and migration details needed for implementation confidence.
 
@@ -784,14 +790,13 @@ Before evaluating, the following facts from the codebase were established as gro
 ---
 
 ### 13. Devstral
-**Total: 26 / 40**
+**Total: 24 / 40**
 
 #### AGENTS.md Compliance — 5/10
 
 **Strengths:**
 - Correct `BIGSERIAL`, `TIMESTAMPTZ`.
 - Package-protected repository.
-- Keyset pagination explicitly noted.
 - `@RestControllerAdvice` scoped to `DeviceController`.
 - `ProblemDetail` responses.
 - GDPR note.
@@ -812,7 +817,6 @@ Before evaluating, the following facts from the codebase were established as gro
 - `BIGSERIAL`, `TIMESTAMPTZ`.
 - `Instant` timestamps.
 - `@PrePersist`/`@PreUpdate`.
-- `PageResult<T>`.
 - No Lombok.
 - `RepositoryIT`.
 - `protected Long id` mentioned.
@@ -822,13 +826,13 @@ Before evaluating, the following facts from the codebase were established as gro
 - Missing named constraints in migration (FK/PK naming not following `pk_`, `fk_` prefix pattern).
 - `DeviceConfiguration` wires controller explicitly which is wrong.
 
-#### Completeness — 7/10
+#### Completeness — 5/10
 
 **Covered:** Migration, Entity, Repository, Exceptions, Service (via interface+impl), DTOs, Controller, Exception Handler, Configuration, JSON model tests, Repository IT, Service test, Controller test, AGENTS.md update.
 
-**Issues (-3):**
+**Issues (-5):**
+- No `GET /api/devices` list endpoint is planned, so the feature is not production-complete under the completeness rubric.
 - Creating an unnecessary interface doubles the artifact count without value.
-- No `DeviceTest.java` (entity unit test mentioned but entity-level testing is unusual and suggests possible confusion).
 - No `mvn verify` step.
 - Full integration test class `DeviceControllerIT` mentioned but not planned in `CONTROLLER_TESTING.md`.
 
@@ -1191,7 +1195,7 @@ Before evaluating, the following facts from the codebase were established as gro
 - All use `TIMESTAMPTZ`.
 - All specify package-protected repositories.
 - All use `@Configuration` bean wiring.
-- All include keyset pagination.
+- Opus and GLM include keyset pagination; Sonnet is otherwise very strong but omits the list endpoint entirely.
 - All include JSON model tests, Repository IT, service unit test, and controller test.
 - All include an AGENTS.md update step.
 
@@ -1208,7 +1212,7 @@ Before evaluating, the following facts from the codebase were established as gro
 | `DeviceService` interface + `DeviceServiceImpl` / `JpaDeviceService` | Devstral (cloud), Devstral Small 2 (local) |
 | DTOs passed to service layer | Baseline |
 | DTO-owned mapping not stated explicitly | GPT 5.4 (gh), GPT 5.4 (oai), GPT 5.4 Extra-High, GPT 5.3 Codex, GPT 5.3 Codex High, GPT 5.3 Codex Extra-High, GPT 5.3 Codex Low |
-| No keyset pagination / `PageResult<T>` (no list endpoint) | GPT 5.4 (gh), GPT 5.4 (oai), GPT 5.4 Extra-High, GPT 5.3 Codex, GPT 5.3 Codex High, GPT 5.3 Codex Extra-High, GPT 5.3 Codex Low |
+| No production-complete listing (`GET /api/devices` with keyset pagination) | Sonnet, GPT 5.4 (gh), GPT 5.4 (oai), GPT 5.4 Extra-High, GPT 5.3 Codex, GPT 5.3 Codex High, GPT 5.3 Codex Extra-High, GPT 5.3 Codex Low, Devstral, Baseline (Haiku 4.5) |
 | Outgoing (entity→DTO) mapping completely absent from plan *(not penalized — AGENTS.md does not require it, but plans that address it earn credit)* | MiniMax, Kimi, GPT 5.3 Codex High, GPT 5.3 Codex Extra-High, Nemotron 3 Nano, Devstral Small 2, GPT-OSS Safeguard, Qwen Turbo, DeepSeek |
 | No JSON model tests | DeepSeek, Qwen, all three local plans |
 | No AGENTS.md update | DeepSeek, Qwen, partial; all three local plans |
@@ -1219,22 +1223,22 @@ Before evaluating, the following facts from the codebase were established as gro
 
 ### Key Differentiators
 - **Opus** excels at the cross-cutting concerns section, making architectural rationale explicit and actionable. Along with GLM, it uses `@ManyToMany` directly on the entity with `@JoinTable` — no separate junction entity class. Provides the cleanest DTO mapping path: `CreateDeviceDto.toEntity()` for incoming and a private `toDto(Device)` helper in the controller for outgoing.
-- **Sonnet** has the most complete `DeviceConfiguration` code, the cleanest bulk-assign API design (`PUT /{id}/sensors` with body enabling unassignment), and the strongest cross-cutting concerns discussion. Like Opus, shows both incoming `toEntity()` on DTOs and outgoing `toDto()` in the controller.
+- **Sonnet** has the most complete `DeviceConfiguration` code, the cleanest bulk-assign API design (`PUT /{id}/sensors` with body enabling unassignment), and the strongest cross-cutting concerns discussion. Like Opus, shows both incoming `toEntity()` on DTOs and outgoing `toDto()` in the controller. Its main score-limiting gap is the missing list endpoint.
 - **GLM** provides the most complete Java code examples overall, including transaction details, controller methods with OpenAPI annotations, `@Query`/`@Param` repository methods, configuration, and exception handling — the most immediately actionable plan for implementation. Like Opus, uses `@ManyToMany` directly on the entity. However, the DTO mapping path is contradictory: DTOs include `toEntity()` methods but service method signatures accept DTOs directly, meaning DTOs leak into the service layer.
 - **GLM** is the only plan to include `@EntityGraph` for avoiding N+1 queries on the sensor relationship and a unique constraint on device name in the DB schema.
-- **GPT 5.4 (GitHub Copilot)** is the strongest GPT planner: good layering, explicit configuration, practical testing plan, and a clear feature outline, but still less codebase-specific than the top three plans.
+- **GPT 5.4 (GitHub Copilot)** is the strongest GPT planner: good layering, explicit configuration, practical testing plan, and a clear feature outline, with less codebase-specific detail than Opus, Sonnet, and GLM.
 - **GPT 5.3 Codex** is the cleanest ChatGPT Codex planning result: solid structure, correct technology choices, and a useful verification flow, but generic on pagination, mapping style, and migration specifics.
 - **GPT 5.4 (ChatGPT)** is similar in overall quality to Kimi: sensible and complete, but more abstract than the top GPT plans and less anchored to existing repository conventions.
-- **GPT 5.4 Extra-High** matches GPT 5.4 (ChatGPT) at 29/40 despite taking 2m 37s instead of 42s. It adds a useful "Recommended Defaults" section that makes assumptions auditable, and includes GDPR logging guidance, but the core gaps (no list endpoint, no code snippets, generic migration) are unchanged — extra thinking time yields no score improvement.
-- **GPT 5.3 Codex Extra-High** has the most specific migration schema of any GPT plan (exact column types, `TIMESTAMPTZ`, named indexes), but weakens itself by inventing a one-device-per-sensor rule not present in the requirements.
+- **GPT 5.4 Extra-High** includes a useful "Recommended Defaults" section that makes assumptions auditable, and it includes GDPR logging guidance. Its main gaps are the missing list endpoint, missing unassign path, lack of code snippets, and generic migration guidance.
+- **GPT 5.3 Codex Extra-High** has the most specific migration schema of any GPT plan (exact column types, `TIMESTAMPTZ`, named indexes), with completeness limited by the missing list endpoint and missing unassign path.
 - **GPT 5.3 Codex High** is serviceable but notably generic, making it less implementation-ready than the stronger GPT plans.
 - **GPT 5.3 Codex Low** is fast and reasonably structured, but drifts on DTO naming and leaves the sensor-assignment persistence model too open to rank above the baseline.
 - **Kimi** stands out for its detailed API Specification section with full request/response JSON examples for all endpoints. However, most implementation sections (service, repository, controller, entity) are prose bullet lists with no code.
 - **MiniMax** is the most concise correct plan — covers all required artifacts but lacks implementation detail beyond DTOs.
 - **DeepSeek** introduces multiple invented requirements (optimistic locking, soft deletes, sensor exclusivity constraint) that would derail implementation.
 - **Qwen** is effectively unusable as an implementation guide.
-- **All three local LLM plans** score in the 9–14 range, well below most cloud plan. The primary failure modes are: no SQL schema, missing `@Configuration` bean wiring, no JSON model tests, no GDPR note, no AGENTS.md update, and insufficient detail to guide implementation. **Devstral Small 2** and **GPT-OSS Safeguard 20B** are the weakest, comparable to Qwen Turbo. **Nemotron 3 Nano 30B** is the best local plan — it has service method signatures, a full API table, `mvn verify`, and `RepositoryIT` reference — but is still far below the cloud baseline.
-- **The Haiku 4.5 baseline**, despite UUID/Lombok/layering violations, substantially outperforms all local plans due to its detailed SQL migration, DTO field definitions, full implementation sequence, and comprehensive test plan. The gap between the baseline (25) and the best local plan (14) is larger than the gap between the baseline and the top cloud plan (38).
+- **All three local LLM plans** score in the 9–14 range. The primary failure modes are: no SQL schema, missing `@Configuration` bean wiring, no JSON model tests, no GDPR note, no AGENTS.md update, and insufficient detail to guide implementation. **Devstral Small 2** and **GPT-OSS Safeguard 20B** are the weakest, comparable to Qwen Turbo. **Nemotron 3 Nano 30B** is the best local plan because it includes service method signatures, a full API table, `mvn verify`, and a `RepositoryIT` reference.
+- **The Haiku 4.5 baseline**, despite UUID/Lombok/layering violations, provides stronger implementation guidance than the local plans because it includes a detailed SQL migration, DTO field definitions, a full implementation sequence, and a comprehensive test plan.
 
 ### DTO Mapping Path Analysis
 
